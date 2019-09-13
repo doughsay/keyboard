@@ -23,14 +23,11 @@ if keys == [],
 config :nerves_firmware_ssh,
   authorized_keys: Enum.map(keys, &File.read!/1)
 
-# Configure nerves_init_gadget.
-# See https://hexdocs.pm/nerves_init_gadget/readme.html for more information.
-
 # Setting the node_name will enable Erlang Distribution.
 # Only enable this for prod if you understand the risks.
 node_name = if Mix.env() != :prod, do: "firmware"
 
-config :nerves_init_gadget,
+config :gadget,
   ifname: "bond0",
   address_method: :dhcpd,
   mdns_domain: "keyboard.local",
