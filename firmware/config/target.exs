@@ -36,6 +36,14 @@ config :gadget,
 
 config :nerves_runtime, :kernel, use_system_registry: false
 
+config :nerves_leds,
+  names: [
+    usr1: "beaglebone:green:usr0",
+    usr2: "beaglebone:green:usr1",
+    usr3: "beaglebone:green:usr2",
+    usr4: "beaglebone:green:usr3"
+  ]
+
 # Import target specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 # Uncomment to use target specific configurations
