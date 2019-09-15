@@ -5,10 +5,8 @@ defmodule Firmware.MatrixServer do
 
   @refresh_rate_hz 50
 
-  @row1_pin 58
-  @row2_pin 60
-  @col1_pin 47
-  @col2_pin 46
+  @row_pins [58, 60]
+  @col_pins [47, 46]
 
   # Client
 
@@ -23,11 +21,6 @@ defmodule Firmware.MatrixServer do
 
   @impl true
   def init(%{rate: rate, event_receiver: event_receiver}) do
-    {:ok, row1} = GPIO.open(@row1_pin, :output, initial_value: 0)
-    {:ok, row2} = GPIO.open(@row2_pin, :output, initial_value: 0)
-    {:ok, col1} = GPIO.open(@col1_pin, :input)
-    {:ok, col2} = GPIO.open(@col2_pin, :input)
-
     Process.send_after(self(), :tick, div(rate, 1_000))
 
     {:ok,
@@ -35,22 +28,34 @@ defmodule Firmware.MatrixServer do
        event_receiver: event_receiver,
        rate: rate,
        last_run_time: :os.system_time(:microsecond),
-       rows: [row1, row2],
-       cols: [col1, col2],
-       previous_matrix: [[0, 0], [0, 0]]
+       rows: init_row_pins(),
+       cols: init_col_pins(),
+       previous_matrix: []
      }}
+  end
+
+  defp init_row_pins do
+    @row_pins
+    |> Enum.map(fn pin ->
+      {:ok, ref} = GPIO.open(pin, :output, initial_value: 0)
+      ref
+    end)
+    |> Enum.with_index()
+  end
+
+  defp init_col_pins do
+    @col_pins
+    |> Enum.map(fn pin ->
+      {:ok, ref} = GPIO.open(pin, :input)
+      ref
+    end)
+    |> Enum.with_index()
   end
 
   @impl true
   def handle_info(:tick, %{rate: rate, last_run_time: last_run_time} = state) do
     before_work = :os.system_time(:microsecond)
-
-    matrix = scan(state)
-
-    if matrix != state.previous_matrix do
-      send(state.event_receiver, {:matrix_changed, matrix})
-    end
-
+    matrix = do_tick(state)
     after_work = :os.system_time(:microsecond)
 
     schedule_drift = before_work - last_run_time - rate
@@ -58,23 +63,42 @@ defmodule Firmware.MatrixServer do
     total_drift = schedule_drift + work_drift
     delay_ms = (rate - total_drift) |> div(1_000)
 
-    Process.send_after(self(), :tick, delay_ms)
+    if delay_ms <= 0 do
+      send(self(), :tick)
+    else
+      Process.send_after(self(), :tick, delay_ms)
+    end
 
     {:noreply, %{state | last_run_time: before_work - schedule_drift, previous_matrix: matrix}}
   end
 
+  defp do_tick(state) do
+    matrix = scan(state)
+
+    if matrix != state.previous_matrix do
+      send(state.event_receiver, {:matrix_changed, matrix})
+    end
+
+    matrix
+  end
+
   defp scan(state) do
-    for row <- state.rows do
+    Enum.reduce(state.rows, [], fn {row, row_idx}, acc ->
       GPIO.write(row, 1)
 
-      cols =
-        for col <- state.cols do
-          GPIO.read(col)
-        end
+      acc =
+        Enum.reduce(state.cols, acc, fn {col, col_idx}, acc ->
+          if GPIO.read(col) == 1 do
+            [{col_idx, row_idx} | acc]
+          else
+            acc
+          end
+        end)
 
       GPIO.write(row, 0)
 
-      cols
-    end
+      acc
+    end)
+    |> Enum.reverse()
   end
 end
