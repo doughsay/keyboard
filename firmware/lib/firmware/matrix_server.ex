@@ -1,9 +1,11 @@
+require Logger
+
 defmodule Firmware.MatrixServer do
   use GenServer
 
   alias Circuits.GPIO
 
-  @refresh_rate_hz 50
+  @refresh_rate_hz 100
 
   @row_pins [58, 60]
   @col_pins [47, 46]
@@ -64,6 +66,7 @@ defmodule Firmware.MatrixServer do
     delay_ms = (rate - total_drift) |> div(1_000)
 
     if delay_ms <= 0 do
+      Logger.warn("#{__MODULE__} behind by #{delay_ms}ms in matrix scanning!")
       send(self(), :tick)
     else
       Process.send_after(self(), :tick, delay_ms)
