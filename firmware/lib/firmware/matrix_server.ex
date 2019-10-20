@@ -24,9 +24,12 @@ defmodule Firmware.MatrixServer do
   @impl true
   def init(%{rate: rate, event_receiver: event_receiver}) do
     Process.send_after(self(), :tick, div(rate, 1_000))
+    Process.send_after(self(), :report, 10_000)
 
     {:ok,
      %{
+       started: DateTime.utc_now(),
+       scan_count: 0,
        event_receiver: event_receiver,
        rate: rate,
        last_run_time: :os.system_time(:microsecond),
@@ -55,6 +58,19 @@ defmodule Firmware.MatrixServer do
   end
 
   @impl true
+  def handle_info(:report, state) do
+    since_start = DateTime.diff(DateTime.utc_now(), state.started, :microsecond)
+    seconds = since_start / 1_000_000
+    rate = state.scan_count / seconds
+    display_rate = Float.round(rate, 3)
+    Logger.info("Matrix Scan Rate: #{display_rate}hz")
+
+    Process.send_after(self(), :report, 10_000)
+
+    {:noreply, state}
+  end
+
+  @impl true
   def handle_info(:tick, %{rate: rate, last_run_time: last_run_time} = state) do
     before_work = :os.system_time(:microsecond)
     matrix = do_tick(state)
@@ -72,7 +88,13 @@ defmodule Firmware.MatrixServer do
       Process.send_after(self(), :tick, delay_ms)
     end
 
-    {:noreply, %{state | last_run_time: before_work - schedule_drift, previous_matrix: matrix}}
+    {:noreply,
+     %{
+       state
+       | last_run_time: before_work - schedule_drift,
+         previous_matrix: matrix,
+         scan_count: state.scan_count + 1
+     }}
   end
 
   defp do_tick(state) do

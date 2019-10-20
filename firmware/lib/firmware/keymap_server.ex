@@ -6,8 +6,8 @@ defmodule Firmware.KeymapServer do
   @keymap %{
     {0, 0} => :a,
     {1, 0} => :b,
-    {0, 1} => :c,
-    {1, 1} => :d
+    {0, 1} => :x,
+    {1, 1} => :y
   }
 
   # Client
@@ -32,7 +32,7 @@ defmodule Firmware.KeymapServer do
   end
 
   @impl true
-  def handle_info({:matrix_changed, matrix} = event, %{keyset: old_keyset} = state) do
+  def handle_info({:matrix_changed, matrix}, %{keyset: old_keyset} = state) do
     new_keyset = Enum.map(matrix, fn position -> @keymap[position] end)
 
     if new_keyset != old_keyset do
