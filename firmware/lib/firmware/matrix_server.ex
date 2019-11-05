@@ -5,53 +5,61 @@ defmodule Firmware.MatrixServer do
 
   alias Circuits.GPIO
 
-  @refresh_rate_hz 100
-
-  @row_pins [58, 60]
-  @col_pins [47, 46]
-
   # Client
 
   def start_link(event_receiver) do
-    GenServer.start_link(__MODULE__, %{
-      rate: div(1_000_000, @refresh_rate_hz),
-      event_receiver: event_receiver
-    })
+    GenServer.start_link(__MODULE__, event_receiver)
+  end
+
+  # Config
+
+  defp refresh_rate do
+    Application.fetch_env!(:firmware, :refresh_rate)
+  end
+
+  defp row_pins do
+    Application.fetch_env!(:firmware, :row_pins)
+  end
+
+  defp col_pins do
+    Application.fetch_env!(:firmware, :col_pins)
   end
 
   # Server
 
   @impl true
-  def init(%{rate: rate, event_receiver: event_receiver}) do
-    Process.send_after(self(), :tick, div(rate, 1_000))
+  def init(event_receiver) do
+    state = %{
+      started: DateTime.utc_now(),
+      scan_count: 0,
+      event_receiver: event_receiver,
+      rate: div(1_000_000, refresh_rate()),
+      last_run_time: :os.system_time(:microsecond),
+      rows: init_row_pins(),
+      cols: init_col_pins(),
+      previous_matrix: []
+    }
+
+    Process.send_after(self(), :tick, div(state.rate, 1_000))
+    # FIXME: remove me
     Process.send_after(self(), :report, 10_000)
 
-    {:ok,
-     %{
-       started: DateTime.utc_now(),
-       scan_count: 0,
-       event_receiver: event_receiver,
-       rate: rate,
-       last_run_time: :os.system_time(:microsecond),
-       rows: init_row_pins(),
-       cols: init_col_pins(),
-       previous_matrix: []
-     }}
+    {:ok, state}
   end
 
   defp init_row_pins do
-    @row_pins
+    row_pins()
     |> Enum.map(fn pin ->
-      {:ok, ref} = GPIO.open(pin, :output, initial_value: 0)
+      {:ok, ref} = GPIO.open(pin, :input)
       ref
     end)
     |> Enum.with_index()
   end
 
   defp init_col_pins do
-    @col_pins
+    col_pins()
     |> Enum.map(fn pin ->
-      {:ok, ref} = GPIO.open(pin, :input)
+      {:ok, ref} = GPIO.open(pin, :output, initial_value: 0)
       ref
     end)
     |> Enum.with_index()
@@ -82,7 +90,6 @@ defmodule Firmware.MatrixServer do
     delay_ms = (rate - total_drift) |> div(1_000)
 
     if delay_ms <= 0 do
-      Logger.warn("#{__MODULE__} behind by #{delay_ms}ms in matrix scanning!")
       send(self(), :tick)
     else
       Process.send_after(self(), :tick, delay_ms)
@@ -108,19 +115,19 @@ defmodule Firmware.MatrixServer do
   end
 
   defp scan(state) do
-    Enum.reduce(state.rows, [], fn {row, row_idx}, acc ->
-      GPIO.write(row, 1)
+    Enum.reduce(state.cols, [], fn {col, col_idx}, acc ->
+      GPIO.write(col, 1)
 
       acc =
-        Enum.reduce(state.cols, acc, fn {col, col_idx}, acc ->
-          if GPIO.read(col) == 1 do
+        Enum.reduce(state.rows, acc, fn {row, row_idx}, acc ->
+          if GPIO.read(row) == 1 do
             [{col_idx, row_idx} | acc]
           else
             acc
           end
         end)
 
-      GPIO.write(row, 0)
+      GPIO.write(col, 0)
 
       acc
     end)

@@ -44,6 +44,13 @@ config :nerves_leds,
     usr4: "beaglebone:green:usr3"
   ]
 
+config :firmware,
+  refresh_rate: 1_000,
+  # , 20, 26, 59, 58, 57, 60],
+  row_pins: [87, 89],
+  # , 64, 46, 44, 23, 65, 27, 45]
+  col_pins: [52, 47]
+
 # Import target specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 # Uncomment to use target specific configurations
