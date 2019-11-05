@@ -13,10 +13,6 @@ defmodule Firmware.MatrixServer do
 
   # Config
 
-  defp refresh_rate do
-    Application.fetch_env!(:firmware, :refresh_rate)
-  end
-
   defp row_pins do
     Application.fetch_env!(:firmware, :row_pins)
   end
@@ -30,19 +26,13 @@ defmodule Firmware.MatrixServer do
   @impl true
   def init(event_receiver) do
     state = %{
-      started: DateTime.utc_now(),
-      scan_count: 0,
       event_receiver: event_receiver,
-      rate: div(1_000_000, refresh_rate()),
-      last_run_time: :os.system_time(:microsecond),
       rows: init_row_pins(),
       cols: init_col_pins(),
       previous_matrix: []
     }
 
-    Process.send_after(self(), :tick, div(state.rate, 1_000))
-    # FIXME: remove me
-    Process.send_after(self(), :report, 10_000)
+    send(self(), :tick)
 
     {:ok, state}
   end
@@ -66,52 +56,16 @@ defmodule Firmware.MatrixServer do
   end
 
   @impl true
-  def handle_info(:report, state) do
-    since_start = DateTime.diff(DateTime.utc_now(), state.started, :microsecond)
-    seconds = since_start / 1_000_000
-    rate = state.scan_count / seconds
-    display_rate = Float.round(rate, 3)
-    Logger.info("Matrix Scan Rate: #{display_rate}hz")
-
-    Process.send_after(self(), :report, 10_000)
-
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_info(:tick, %{rate: rate, last_run_time: last_run_time} = state) do
-    before_work = :os.system_time(:microsecond)
-    matrix = do_tick(state)
-    after_work = :os.system_time(:microsecond)
-
-    schedule_drift = before_work - last_run_time - rate
-    work_drift = after_work - before_work
-    total_drift = schedule_drift + work_drift
-    delay_ms = (rate - total_drift) |> div(1_000)
-
-    if delay_ms <= 0 do
-      send(self(), :tick)
-    else
-      Process.send_after(self(), :tick, delay_ms)
-    end
-
-    {:noreply,
-     %{
-       state
-       | last_run_time: before_work - schedule_drift,
-         previous_matrix: matrix,
-         scan_count: state.scan_count + 1
-     }}
-  end
-
-  defp do_tick(state) do
+  def handle_info(:tick, state) do
     matrix = scan(state)
 
     if matrix != state.previous_matrix do
       send(state.event_receiver, {:matrix_changed, matrix})
     end
 
-    matrix
+    send(self(), :tick)
+
+    {:noreply, %{state | previous_matrix: matrix}}
   end
 
   defp scan(state) do
