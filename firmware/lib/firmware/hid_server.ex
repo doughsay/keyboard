@@ -1,108 +1,16 @@
+require Logger
+
 defmodule Firmware.HIDServer do
   use GenServer
+  use Bitwise
 
-  alias Firmware.KeymapServer
+  alias Firmware.MatrixServer
 
   @device "/dev/hidg0"
 
-  @keys %{
-    kc_a: 0x04,
-    kc_b: 0x05,
-    kc_c: 0x06,
-    kc_d: 0x07,
-    kc_e: 0x08,
-    kc_f: 0x09,
-    kc_g: 0x0A,
-    kc_h: 0x0B,
-    kc_i: 0x0C,
-    kc_j: 0x0D,
-    kc_k: 0x0E,
-    kc_l: 0x0F,
-    kc_m: 0x10,
-    kc_n: 0x11,
-    kc_o: 0x12,
-    kc_p: 0x13,
-    kc_q: 0x14,
-    kc_r: 0x15,
-    kc_s: 0x16,
-    kc_t: 0x17,
-    kc_u: 0x18,
-    kc_v: 0x19,
-    kc_w: 0x1A,
-    kc_x: 0x1B,
-    kc_y: 0x1C,
-    kc_z: 0x1D,
-    kc_1: 0x1E,
-    kc_2: 0x1F,
-    kc_3: 0x20,
-    kc_4: 0x21,
-    kc_5: 0x22,
-    kc_6: 0x23,
-    kc_7: 0x24,
-    kc_8: 0x25,
-    kc_9: 0x26,
-    kc_0: 0x27,
-    kc_ent: 0x28,
-    kc_esc: 0x29,
-    kc_bspc: 0x2A,
-    kc_tab: 0x2B,
-    kc_spc: 0x2C,
-    kc_mins: 0x2D,
-    kc_eql: 0x2E,
-    kc_lbrc: 0x2F,
-    kc_rbrc: 0x30,
-    kc_bsls: 0x31,
-    kc_nuhs: 0x32,
-    kc_scln: 0x33,
-    kc_quot: 0x34,
-    kc_grv: 0x35,
-    kc_comm: 0x36,
-    kc_dot: 0x37,
-    kc_slsh: 0x38,
-    kc_clck: 0x39,
-    kc_f1: 0x3A,
-    kc_f2: 0x3B,
-    kc_f3: 0x3C,
-    kc_f4: 0x3D,
-    kc_f5: 0x3E,
-    kc_f6: 0x3F,
-    kc_f7: 0x40,
-    kc_f8: 0x41,
-    kc_f9: 0x42,
-    kc_f10: 0x43,
-    kc_f11: 0x44,
-    kc_f12: 0x45,
-    kc_pscr: 0x46,
-    kc_slck: 0x47,
-    kc_paus: 0x48,
-    kc_ins: 0x49,
-    kc_home: 0x4A,
-    kc_pgup: 0x4B,
-    kc_del: 0x4C,
-    kc_end: 0x4D,
-    kc_pgdn: 0x4E,
-    kc_rght: 0x4F,
-    kc_left: 0x50,
-    kc_down: 0x51,
-    kc_up: 0x52,
-    # snip
-    kc_app: 0x65
-  }
-
-  @modifiers %{
-    kc_lctl: 0x01,
-    kc_lsft: 0x02,
-    kc_lalt: 0x04,
-    kc_lspr: 0x08,
-    kc_rctl: 0x10,
-    kc_rsft: 0x20,
-    kc_ralt: 0x40,
-    kc_rspr: 0x80
-  }
-
   # Client
 
-  def start_link() do
+  def start_link(_opts) do
     GenServer.start_link(__MODULE__, %{device: @device})
   end
 
@@ -111,7 +19,7 @@ defmodule Firmware.HIDServer do
   @impl true
   def init(%{device: device}) do
     {:ok, file} = File.open(device, [:write])
-    {:ok, _keymap} = KeymapServer.start_link(self())
+    {:ok, _matrix} = MatrixServer.start_link(self())
 
     modifier_state = 0x00
     key_state = %{}
@@ -128,11 +36,16 @@ defmodule Firmware.HIDServer do
   end
 
   @impl true
-  def handle_info({:keyset_changed, keyset}, %{key_state: old_key_state} = state) do
-    code_set = Enum.map(keyset, fn key -> @keys[key] end)
+  def handle_info({:keys_changed, keys}, state) do
+    %{key_state: old_key_state} = state
+
+    %{modifier: modifier_codes, key: key_codes} =
+      Enum.group_by(keys, & &1.type, & &1.code)
+      |> Map.put_new(:modifier, [])
+      |> Map.put_new(:key, [])
 
     existing_codes = Map.keys(old_key_state)
-    codes_to_remove = existing_codes -- code_set
+    codes_to_remove = existing_codes -- key_codes
 
     new_key_state =
       Enum.reduce(codes_to_remove, old_key_state, fn code, acc ->
@@ -140,7 +53,7 @@ defmodule Firmware.HIDServer do
       end)
 
     new_key_state =
-      Enum.reduce(code_set, new_key_state, fn code, acc ->
+      Enum.reduce(key_codes, new_key_state, fn code, acc ->
         if acc[code] do
           acc
         else
@@ -151,9 +64,14 @@ defmodule Firmware.HIDServer do
         end
       end)
 
-    new_state = %{state | key_state: new_key_state}
+    new_modifier_state =
+      Enum.reduce(modifier_codes, 0, fn code, acc ->
+        acc ||| code
+      end)
 
-    if new_key_state != old_key_state do
+    new_state = %{state | key_state: new_key_state, modifier_state: new_modifier_state}
+
+    if new_state != state do
       write_hid(new_state)
     end
 
@@ -184,6 +102,9 @@ defmodule Firmware.HIDServer do
       end)
 
     hid_report = ([state.modifier_state, 0x00] ++ key_report) |> List.to_string()
+
+    Logger.debug(fn -> "HID state changed: " <> inspect(hid_report) end)
+
     IO.binwrite(state.hid_file, hid_report)
   end
 end

@@ -1,18 +1,5 @@
 defmodule Firmware do
   @moduledoc """
-  Documentation for Firmware.
+  The keyboard firmware application.
   """
-
-  @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> Firmware.hello
-      :world
-
-  """
-  def hello do
-    :world
-  end
 end

@@ -9,6 +9,7 @@ defmodule Firmware.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Firmware.Supervisor]
+
     children =
       [
         # Children for all targets
@@ -33,6 +34,7 @@ defmodule Firmware.Application do
       # Children for all targets except host
       # Starts a worker by calling: Firmware.Worker.start_link(arg)
       # {Firmware.Worker, arg},
+      Firmware.HIDServer
     ]
   end
 

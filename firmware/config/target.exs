@@ -45,10 +45,8 @@ config :nerves_leds,
   ]
 
 config :firmware,
-  row_pins: [87, 89, 20, 26, 59, 58, 57, 86],
-  col_pins: [45, 27, 65, 23, 44, 46, 64, 47, 52],
-  matrix_layout: File.read!("config/matrix_layout.txt"),
-  switch_layout: File.read!("config/switch_layout.txt")
+  current_keymap_file: "/etc/current_keymap",
+  keymaps_path: "/etc/keymaps/"
 
 # Import target specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

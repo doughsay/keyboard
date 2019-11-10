@@ -4,6 +4,7 @@ defmodule Firmware.MatrixServer do
   use GenServer
 
   alias Circuits.GPIO
+  alias Firmware.{Keyboard, Utils}
 
   # Client
 
@@ -27,22 +28,21 @@ defmodule Firmware.MatrixServer do
   end
 
   defp init_matrix_config do
+    keycode_map = Keyboard.switch_to_keycode_map()
+
     matrix_layout =
-      Application.fetch_env!(:firmware, :matrix_layout)
-      |> Firmware.Layout.parse!()
-      |> pad_matrix()
+      Keyboard.matrix_layout()
+      |> Utils.pad_matrix()
       |> Enum.zip()
       |> Enum.map(fn col ->
-        col |> Tuple.to_list() |> Enum.filter(& &1)
+        col
+        |> Tuple.to_list()
+        |> Enum.filter(& &1)
+        |> Enum.map(&Map.fetch!(keycode_map, &1))
       end)
 
-    row_pins =
-      Application.fetch_env!(:firmware, :row_pins)
-      |> Enum.map(&open_input_pin!/1)
-
-    col_pins =
-      Application.fetch_env!(:firmware, :col_pins)
-      |> Enum.map(&open_output_pin!/1)
+    row_pins = Keyboard.row_pins() |> Enum.map(&open_input_pin!/1)
+    col_pins = Keyboard.col_pins() |> Enum.map(&open_output_pin!/1)
 
     Enum.zip(
       col_pins,
@@ -50,24 +50,6 @@ defmodule Firmware.MatrixServer do
         Enum.zip(row_pins, col)
       end)
     )
-  end
-
-  defp pad_matrix([first | _rest] = matrix) do
-    length = Enum.count(first)
-
-    Enum.map(matrix, fn row ->
-      if Enum.count(row) != length do
-        [[], padded] =
-          Enum.reduce(1..length, [row, []], fn
-            _, [[], acc] -> [[], [nil | acc]]
-            _, [[next | rest], acc] -> [rest, [next | acc]]
-          end)
-
-        Enum.reverse(padded)
-      else
-        row
-      end
-    end)
   end
 
   defp open_input_pin!(pin_number) do
@@ -85,6 +67,8 @@ defmodule Firmware.MatrixServer do
     keys = scan(state.matrix_config)
 
     if keys != state.previous_keys do
+      Logger.debug(fn -> "Keys changed: " <> inspect(keys) end)
+
       send(state.event_receiver, {:keys_changed, keys})
     end
 
@@ -95,20 +79,25 @@ defmodule Firmware.MatrixServer do
 
   defp scan(matrix_config) do
     Enum.reduce(matrix_config, [], fn {col_pin, rows}, acc ->
-      GPIO.write(col_pin, 1)
-
-      acc =
+      with_pin_high(col_pin, fn ->
         Enum.reduce(rows, acc, fn {row_pin, key_id}, acc ->
-          if GPIO.read(row_pin) == 1 do
-            [key_id | acc]
-          else
-            acc
+          case pin_high?(row_pin) do
+            true -> [key_id | acc]
+            false -> acc
           end
         end)
-
-      GPIO.write(col_pin, 0)
-
-      acc
+      end)
     end)
+  end
+
+  defp with_pin_high(pin, fun) do
+    :ok = GPIO.write(pin, 1)
+    response = fun.()
+    :ok = GPIO.write(pin, 0)
+    response
+  end
+
+  defp pin_high?(pin) do
+    GPIO.read(pin) == 1
   end
 end

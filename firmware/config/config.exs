@@ -26,6 +26,11 @@ config :shoehorn,
 
 config :logger, backends: [RingLogger]
 
+# For testing on :host
+config :firmware,
+  current_keymap_file: "rootfs_overlay/etc/current_keymap",
+  keymaps_path: "rootfs_overlay/etc/keymaps/"
+
 if Mix.target() != :host do
   import_config "target.exs"
 end
