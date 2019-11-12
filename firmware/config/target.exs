@@ -44,7 +44,7 @@ config :nerves_leds,
     usr4: "beaglebone:green:usr3"
   ]
 
-config :firmware,
+config :keyboard,
   current_keymap_file: "/etc/current_keymap",
   keymaps_path: "/etc/keymaps/"
 

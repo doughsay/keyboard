@@ -1,10 +1,10 @@
-defmodule Firmware.Keyboard.Config do
+defmodule Keyboard.Config do
   @moduledoc """
   Parses and loads various kinds of config strings into keyboard config data
   structures.
   """
 
-  alias Firmware.Keyboard.Keycode
+  alias Keyboard.Keycode
   alias __MODULE__.Parser
 
   # The GPIO pin IDs that are connected to the matrix rows
@@ -101,7 +101,7 @@ defmodule Firmware.Keyboard.Config do
       "default"
   """
   def current_keymap_name,
-    do: Application.fetch_env!(:firmware, :current_keymap_file) |> File.read!() |> String.trim()
+    do: Application.fetch_env!(:keyboard, :current_keymap_file) |> File.read!() |> String.trim()
 
   @doc """
   Returns the current keymap.
@@ -118,7 +118,7 @@ defmodule Firmware.Keyboard.Config do
       ]
   """
   def current_keymap do
-    keymaps_path = Application.fetch_env!(:firmware, :keymaps_path)
+    keymaps_path = Application.fetch_env!(:keyboard, :keymaps_path)
     current_keymap = current_keymap_name()
 
     Path.join(keymaps_path, current_keymap)
@@ -127,13 +127,13 @@ defmodule Firmware.Keyboard.Config do
   end
 
   @doc """
-  Returns a map of switch IDs to `Firmware.Keyboard.Keycode`s.
+  Returns a map of switch IDs to `Keyboard.Keycode`s.
 
   ## Example
 
       iex> map = switch_to_keycode_map()
       ...> map[:k001]
-      #Firmware.Keyboard.Keycode<Escape>
+      #Keyboard.Keycode<Escape>
   """
   def switch_to_keycode_map do
     Enum.zip(switch_layout(), current_keymap())

@@ -1,4 +1,4 @@
-defmodule Firmware.Keyboard do
+defmodule Keyboard do
   @moduledoc """
   Keyboard related functions, including keymaps, layouts and keycodes.
   """

@@ -44,6 +44,8 @@ defmodule Firmware.MixProject do
       {:ring_logger, "~> 0.6"},
       {:toolshed, "~> 0.2"},
       {:circuits_gpio, "~> 0.1"},
+      {:interface, path: "../interface"},
+      {:keyboard, path: "../keyboard"},
 
       # Dependencies for all targets except :host
       {:nerves_runtime, "~> 0.6", targets: @all_targets},

@@ -4,7 +4,7 @@ defmodule Firmware.MatrixServer do
   use GenServer
 
   alias Circuits.GPIO
-  alias Firmware.{Keyboard, Utils}
+  alias Firmware.Utils
 
   # Client
 

@@ -26,10 +26,18 @@ config :shoehorn,
 
 config :logger, backends: [RingLogger]
 
-# For testing on :host
-config :firmware,
-  current_keymap_file: "rootfs_overlay/etc/current_keymap",
-  keymaps_path: "rootfs_overlay/etc/keymaps/"
+# Configures the endpoint
+config :interface, InterfaceWeb.Endpoint,
+  http: [port: 80, ip: {0, 0, 0, 0}],
+  url: [host: "keyboard.local", port: 80],
+  secret_key_base: "pOgEiGJWEsxiX3BmzCNGjiyVUDYG6HGnhzb9FBlG6EeGDiGm1x4tg0TBDqBWA432",
+  render_errors: [view: InterfaceWeb.ErrorView, accepts: ~w(html json)],
+  pubsub: [name: Interface.PubSub, adapter: Phoenix.PubSub.PG2],
+  root: Path.dirname(__DIR__),
+  server: true
+
+# Use Jason for JSON parsing in Phoenix
+config :phoenix, :json_library, Jason
 
 if Mix.target() != :host do
   import_config "target.exs"

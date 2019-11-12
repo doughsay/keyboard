@@ -1,4 +1,4 @@
-defmodule Firmware.Keyboard.Config.Parser do
+defmodule Keyboard.Config.Parser do
   @moduledoc """
   Parses various kinds of config strings into keyboard config data structures.
   """

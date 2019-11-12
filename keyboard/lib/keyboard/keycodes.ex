@@ -1,4 +1,4 @@
-defmodule Firmware.Keyboard.Keycode do
+defmodule Keyboard.Keycode do
   @moduledoc """
   Functions for working with `Keycode` structs.
   """
@@ -108,10 +108,10 @@ defmodule Firmware.Keyboard.Keycode do
   ## Examples
 
       iex> from_id!(:kc_a)
-      #Firmware.Keyboard.Keycode<A>
+      #Keyboard.Keycode<A>
 
       iex> from_id!(:kc_rsft)
-      #Firmware.Keyboard.Keycode<Right Shift>
+      #Keyboard.Keycode<Right Shift>
   """
   def from_id!(id)
 
@@ -140,10 +140,10 @@ defmodule Firmware.Keyboard.Keycode do
   def from_id!(id), do: raise("Invalid Keycode ID: #{id}")
 end
 
-defimpl Inspect, for: Firmware.Keyboard.Keycode do
+defimpl Inspect, for: Keyboard.Keycode do
   import Inspect.Algebra
 
   def inspect(keycode, _opts) do
-    concat(["#Firmware.Keyboard.Keycode<", keycode.description, ">"])
+    concat(["#Keyboard.Keycode<", keycode.description, ">"])
   end
 end
