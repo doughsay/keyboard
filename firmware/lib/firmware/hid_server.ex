@@ -4,7 +4,7 @@ defmodule Firmware.HIDServer do
   use GenServer
   use Bitwise
 
-  alias Firmware.MatrixServer
+  alias Firmware.KeymapServer
 
   @device "/dev/hidg0"
 
@@ -19,7 +19,7 @@ defmodule Firmware.HIDServer do
   @impl true
   def init(%{device: device}) do
     {:ok, file} = File.open(device, [:write])
-    {:ok, _matrix} = MatrixServer.start_link(self())
+    {:ok, _keymap} = KeymapServer.start_link(self())
 
     modifier_state = 0x00
     key_state = %{}
@@ -36,7 +36,7 @@ defmodule Firmware.HIDServer do
   end
 
   @impl true
-  def handle_info({:keys_changed, keys}, state) do
+  def handle_info({:keycodes_changed, keys}, state) do
     %{key_state: old_key_state} = state
 
     %{modifier: modifier_codes, key: key_codes} =

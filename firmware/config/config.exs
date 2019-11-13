@@ -34,7 +34,10 @@ config :interface, InterfaceWeb.Endpoint,
   render_errors: [view: InterfaceWeb.ErrorView, accepts: ~w(html json)],
   pubsub: [name: Interface.PubSub, adapter: Phoenix.PubSub.PG2],
   root: Path.dirname(__DIR__),
-  server: true
+  server: true,
+  live_view: [
+    signing_salt: "qfAK1kcQLLci1GDPV7OvPF+/iLS+vS0f"
+  ]
 
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason

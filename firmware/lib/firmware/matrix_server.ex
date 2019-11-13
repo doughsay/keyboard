@@ -28,8 +28,7 @@ defmodule Firmware.MatrixServer do
   end
 
   defp init_matrix_config do
-    keycode_map = Keyboard.switch_to_keycode_map()
-
+    # transpose matrix, because we need to scan by column, not by row
     matrix_layout =
       Keyboard.matrix_layout()
       |> Utils.pad_matrix()
@@ -38,12 +37,13 @@ defmodule Firmware.MatrixServer do
         col
         |> Tuple.to_list()
         |> Enum.filter(& &1)
-        |> Enum.map(&Map.fetch!(keycode_map, &1))
       end)
 
+    # open the pins
     row_pins = Keyboard.row_pins() |> Enum.map(&open_input_pin!/1)
     col_pins = Keyboard.col_pins() |> Enum.map(&open_output_pin!/1)
 
+    # zip the open pin resources into the matrix structure
     Enum.zip(
       col_pins,
       Enum.map(matrix_layout, fn col ->

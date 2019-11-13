@@ -12,7 +12,10 @@ config :interface, InterfaceWeb.Endpoint,
   url: [host: "localhost"],
   secret_key_base: "pOgEiGJWEsxiX3BmzCNGjiyVUDYG6HGnhzb9FBlG6EeGDiGm1x4tg0TBDqBWA432",
   render_errors: [view: InterfaceWeb.ErrorView, accepts: ~w(html json)],
-  pubsub: [name: Interface.PubSub, adapter: Phoenix.PubSub.PG2]
+  pubsub: [name: Interface.PubSub, adapter: Phoenix.PubSub.PG2],
+  live_view: [
+    signing_salt: "qfAK1kcQLLci1GDPV7OvPF+/iLS+vS0f"
+  ]
 
 # Configures Elixir's Logger
 config :logger, :console,

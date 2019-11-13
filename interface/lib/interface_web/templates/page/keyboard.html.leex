@@ -1,0 +1,5 @@
+<%= for row <- @keyboard_layout do %>
+    <div class='keyboard-layout-row'>
+        <%= for key <- row, do: raw html_for_key(key, @active_keys) %>
+    </div>
+<% end %>

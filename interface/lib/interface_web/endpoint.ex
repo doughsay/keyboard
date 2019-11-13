@@ -1,6 +1,8 @@
 defmodule InterfaceWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :interface
 
+  socket "/live", Phoenix.LiveView.Socket
+
   socket "/socket", InterfaceWeb.UserSocket,
     websocket: true,
     longpoll: false
