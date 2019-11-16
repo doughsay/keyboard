@@ -106,6 +106,6 @@ defmodule InterfaceWeb.KeyboardLive do
   end
 
   def handle_info({:keys_changed, keys}, socket) do
-    {:noreply, assign(socket, :active_keys, Map.new(keys, &{&1, true}))}
+    {:noreply, assign(socket, :active_keys, keys)}
   end
 end

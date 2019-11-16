@@ -138,6 +138,30 @@ defmodule Keyboard.Keycode do
   end
 
   def from_id!(id), do: raise("Invalid Keycode ID: #{id}")
+
+  @doc """
+  Temporary special layer keycode.
+  """
+  def special(:mo, layer) when is_integer(layer) and layer >= 0 do
+    struct!(__MODULE__,
+      id: :mo,
+      type: :special,
+      code: layer,
+      description: "MO(#{layer})"
+    )
+  end
+
+  @doc """
+  Temporary special none keycode.
+  """
+  def none do
+    struct!(__MODULE__,
+      id: :none,
+      type: :special,
+      code: 0,
+      description: "None"
+    )
+  end
 end
 
 defimpl Inspect, for: Keyboard.Keycode do

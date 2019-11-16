@@ -66,11 +66,20 @@ defmodule Firmware.MatrixServer do
   def handle_info(:scan, state) do
     keys = scan(state.matrix_config)
 
-    if keys != state.previous_keys do
-      Logger.debug(fn -> "Keys changed: " <> inspect(keys) end)
+    removed = state.previous_keys -- keys
+    added = keys -- state.previous_keys
 
-      send(state.event_receiver, {:keys_changed, keys})
-    end
+    Enum.each(removed, fn key ->
+      Logger.debug(fn -> "Key released: #{key}" end)
+
+      send(state.event_receiver, {:key_released, key})
+    end)
+
+    Enum.each(added, fn key ->
+      Logger.debug(fn -> "Key pressed: #{key}" end)
+
+      send(state.event_receiver, {:key_pressed, key})
+    end)
 
     send(self(), :scan)
 

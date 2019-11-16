@@ -34,7 +34,7 @@ defmodule Firmware.Application do
       # Children for all targets except host
       # Starts a worker by calling: Firmware.Worker.start_link(arg)
       # {Firmware.Worker, arg},
-      Firmware.HIDServer
+      Firmware.KeyboardServer
     ]
   end
 
