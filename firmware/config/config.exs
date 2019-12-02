@@ -26,6 +26,14 @@ config :shoehorn,
 
 config :logger, backends: [RingLogger]
 
+if Mix.env() == "prod" do
+  config :logger,
+    level: :info,
+    compile_time_purge_matching: [
+      [level_lower_than: :info]
+    ]
+end
+
 # Configures the endpoint
 config :interface, InterfaceWeb.Endpoint,
   http: [port: 80, ip: {0, 0, 0, 0}],
