@@ -34,6 +34,15 @@ defmodule Keyboard.StateTest do
       k004: Key.from_id!(:kc_x),
       k005: %Transparent{},
       k006: %None{}
+    },
+    # Layer 3
+    %{
+      k001: %None{},
+      k002: %None{},
+      k003: %None{},
+      k004: %None{},
+      k005: %None{},
+      k006: %None{}
     }
   ]
 

@@ -7,8 +7,7 @@ defmodule Keyboard.State do
 
   alias Keyboard.Keycodes.{Key, Layer, Modifier, None, Transparent}
 
-  defstruct active_layers: [],
-            keys: %{},
+  defstruct keys: %{},
             layers: [],
             modifiers: %{},
             six_keys: [nil, nil, nil, nil, nil, nil]
@@ -22,10 +21,12 @@ defmodule Keyboard.State do
       |> Enum.map(fn layer ->
         %{
           active: false,
+          activations: %{},
           layer: layer
         }
       end)
       |> put_in([Access.at(0), :active], true)
+      |> put_in([Access.at(0), :activations, :default], true)
       |> Enum.reverse()
 
     struct!(__MODULE__, layers: layers)
@@ -93,11 +94,12 @@ defmodule Keyboard.State do
     end
   end
 
-  defp apply_keycode(state, _key, %Layer{type: :hold} = layer) do
+  defp apply_keycode(state, key, %Layer{type: :hold} = layer) do
     layers =
       state.layers
       |> Enum.reverse()
       |> put_in([Access.at(layer.layer_id), :active], true)
+      |> put_in([Access.at(layer.layer_id), :activations, key], layer)
       |> Enum.reverse()
 
     %{state | layers: layers}
@@ -147,11 +149,24 @@ defmodule Keyboard.State do
     %{state | six_keys: six_keys}
   end
 
-  defp unapply_keycode(state, _key, %Layer{type: :hold} = layer) do
+  defp unapply_keycode(state, key, %Layer{type: :hold} = layer_key) do
+    layer =
+      state.layers
+      |> Enum.reverse()
+      |> Enum.at(layer_key.layer_id)
+      |> update_in([:activations], fn activations -> Map.delete(activations, key) end)
+
+    layer =
+      if layer.activations == %{} do
+        %{layer | active: false}
+      else
+        layer
+      end
+
     layers =
       state.layers
       |> Enum.reverse()
-      |> put_in([Access.at(layer.layer_id), :active], false)
+      |> put_in([Access.at(layer_key.layer_id)], layer)
       |> Enum.reverse()
 
     %{state | layers: layers}
