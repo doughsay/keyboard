@@ -1,22 +1,34 @@
 defmodule InterfaceWeb.PageView do
   use InterfaceWeb, :view
 
-  defp html_for_key({width, key_id}, active_keys) when is_atom(key_id),
-    do:
-      "<span class='key#{active?(key_id, active_keys)}' style='width: #{px_width(width)}px'></span>"
+  @key_width 40
+  @space_width 45
 
-  defp html_for_key(key_id, active_keys) when is_atom(key_id),
-    do: "<span class='key#{active?(key_id, active_keys)}' style='width: #{px_width(1)}px'></span>"
+  defp layout_to_ui(layout, active_keys) do
+    {output, _} = Enum.reduce(layout, {[], 0}, fn row, {output, current_y} ->
+      {row_output, _} = Enum.reduce(row, {[], 0}, fn
+        {width, id}, {acc, current_x} ->
+          px_width = (width * @key_width) + ((width - 1) * 5)
+          active? = Map.has_key?(active_keys, id)
+          key = %{id: id, x: current_x, y: current_y, width: px_width, active?: active?}
+          acc = [key | acc]
+          {acc, current_x + (width * @space_width)}
 
-  defp html_for_key(width, _active_keys) when is_number(width),
-    do: "<span class='spacer' style='width: #{px_width(width)}px'></span>"
+        id, {acc, current_x} when is_atom(id) ->
+          active? = Map.has_key?(active_keys, id)
+          key = %{id: id, x: current_x, y: current_y, width: @key_width, active?: active?}
+          acc = [key | acc]
+          {acc, current_x + @space_width}
 
-  defp px_width(x), do: 40 * x
+        width, {acc, current_x} when is_number(width) ->
+          {acc, current_x + (width * @space_width)}
+      end)
 
-  defp active?(key_id, active_keys) do
-    case active_keys do
-      %{^key_id => _} -> " active"
-      _ -> ""
-    end
+      row_output = Enum.reverse(row_output)
+
+      {[row_output | output], current_y + @space_width}
+    end)
+
+    Enum.reverse(output)
   end
 end

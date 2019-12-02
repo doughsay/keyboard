@@ -1,5 +1,10 @@
-<%= for row <- @keyboard_layout do %>
-    <div class='keyboard-layout-row'>
-        <%= for key <- row, do: raw html_for_key(key, @active_keys) %>
-    </div>
-<% end %>
+<div class='keyboard'>
+    <%= for row <- layout_to_ui(@keyboard_layout, @active_keys) do %>
+        <%= for key <- row do %>
+            <span
+                class='key<%= if key.active?, do: " active" %>'
+                style='width: <%= key.width %>px; left: <%= key.x %>px; top: <%= key.y %>px'
+            ></span>
+        <% end %>
+    <% end %>
+</div>
