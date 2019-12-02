@@ -1,3 +1,2 @@
 %{
-  "zipper_list": {:hex, :zipper_list, "1.1.1", "b083adc33e1323798812fc821edb4cec85ac24033c4147538147bef5ea03b73c", [:mix], [], "hexpm"},
 }

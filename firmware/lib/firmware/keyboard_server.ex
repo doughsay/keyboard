@@ -22,7 +22,7 @@ defmodule Firmware.KeyboardServer do
     {:ok, _matrix} = MatrixServer.start_link(self())
 
     %{
-      keyboard_state: State.new([Config.switch_to_keycode_map()]),
+      keyboard_state: State.new(Config.switch_to_keycode_map()),
       hid_file: File.open!(device, [:write])
     }
     |> write_hid()

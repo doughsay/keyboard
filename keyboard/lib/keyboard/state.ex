@@ -5,10 +5,11 @@ defmodule Keyboard.State do
 
   use Bitwise
 
-  alias Keyboard.Keycode
+  alias Keyboard.Keycodes.{Key, Layer, Modifier, None, Transparent}
 
-  defstruct keymap: [],
+  defstruct active_layers: [],
             keys: %{},
+            layers: [],
             modifiers: %{},
             six_keys: [nil, nil, nil, nil, nil, nil]
 
@@ -16,7 +17,18 @@ defmodule Keyboard.State do
   Returns a new state struct initialized with the given keymap.
   """
   def new(keymap) do
-    struct!(__MODULE__, keymap: keymap |> Enum.with_index() |> ZipperList.from_list())
+    layers =
+      keymap
+      |> Enum.map(fn layer ->
+        %{
+          active: false,
+          layer: layer
+        }
+      end)
+      |> put_in([Access.at(0), :active], true)
+      |> Enum.reverse()
+
+    struct!(__MODULE__, layers: layers)
   end
 
   @doc """
@@ -25,34 +37,42 @@ defmodule Keyboard.State do
   def press_key(%__MODULE__{} = state, key) do
     if Map.has_key?(state.keys, key), do: raise("Already pressed key pressed again! #{key}")
 
-    {%{^key => keycode}, _} = state.keymap.cursor
+    keycode = find_keycode(state.layers, key)
 
     state
     |> add_key(key, keycode)
     |> apply_keycode(key, keycode)
   end
 
+  defp find_keycode(layers, key) do
+    Enum.find_value(layers, %None{}, fn
+      %{active: true, layer: %{^key => %Transparent{}}} -> false
+      %{active: true, layer: %{^key => keycode}} -> keycode
+      _else -> false
+    end)
+  end
+
   defp add_key(state, key, keycode) do
     %{state | keys: Map.put(state.keys, key, keycode)}
   end
 
-  defp apply_keycode(state, key, %Keycode{type: :modifier} = keycode) do
-    keycode_used? =
+  defp apply_keycode(state, key, %Modifier{} = modifier) do
+    modifier_used? =
       Enum.any?(state.modifiers, fn
-        {_key, ^keycode} -> true
+        {_key, ^modifier} -> true
         _ -> false
       end)
 
-    if keycode_used? do
+    if modifier_used? do
       state
     else
-      modifiers = Map.put(state.modifiers, key, keycode)
+      modifiers = Map.put(state.modifiers, key, modifier)
 
       %{state | modifiers: modifiers}
     end
   end
 
-  defp apply_keycode(state, key, %Keycode{type: :key} = keycode) do
+  defp apply_keycode(state, key, %Key{} = keycode) do
     keycode_used? =
       Enum.any?(state.six_keys, fn
         nil -> false
@@ -73,16 +93,17 @@ defmodule Keyboard.State do
     end
   end
 
-  defp apply_keycode(state, _key, %Keycode{id: :mo} = keycode) do
-    keymap =
-      state.keymap
-      |> ZipperList.cursor_start()
-      |> Enum.find(fn %{cursor: {_, idx}} -> idx == keycode.code end)
+  defp apply_keycode(state, _key, %Layer{type: :hold} = layer) do
+    layers =
+      state.layers
+      |> Enum.reverse()
+      |> put_in([Access.at(layer.layer_id), :active], true)
+      |> Enum.reverse()
 
-    %{state | keymap: keymap}
+    %{state | layers: layers}
   end
 
-  defp apply_keycode(state, _key, %Keycode{id: :none}) do
+  defp apply_keycode(state, _key, %None{}) do
     state
   end
 
@@ -104,11 +125,11 @@ defmodule Keyboard.State do
     {%{state | keys: keys}, keycode}
   end
 
-  defp unapply_keycode(state, key, %Keycode{type: :modifier} = keycode) do
+  defp unapply_keycode(state, key, %Modifier{} = modifier) do
     modifiers =
       state.modifiers
       |> Enum.filter(fn
-        {^key, ^keycode} -> false
+        {^key, ^modifier} -> false
         _ -> true
       end)
       |> Map.new()
@@ -116,7 +137,7 @@ defmodule Keyboard.State do
     %{state | modifiers: modifiers}
   end
 
-  defp unapply_keycode(state, key, %Keycode{type: :key} = keycode) do
+  defp unapply_keycode(state, key, %Key{} = keycode) do
     six_keys =
       Enum.map(state.six_keys, fn
         {^key, ^keycode} -> nil
@@ -126,12 +147,17 @@ defmodule Keyboard.State do
     %{state | six_keys: six_keys}
   end
 
-  defp unapply_keycode(state, _key, %Keycode{id: :mo}) do
-    keymap = ZipperList.cursor_start(state.keymap)
-    %{state | keymap: keymap}
+  defp unapply_keycode(state, _key, %Layer{type: :hold} = layer) do
+    layers =
+      state.layers
+      |> Enum.reverse()
+      |> put_in([Access.at(layer.layer_id), :active], false)
+      |> Enum.reverse()
+
+    %{state | layers: layers}
   end
 
-  defp unapply_keycode(state, _key, %Keycode{id: :none}) do
+  defp unapply_keycode(state, _key, %None{}) do
     state
   end
 
@@ -141,13 +167,13 @@ defmodule Keyboard.State do
   def to_hid_report(%__MODULE__{} = state) do
     modifiers_bitmask =
       Enum.reduce(state.modifiers, 0, fn {_, keycode}, acc ->
-        keycode.code ||| acc
+        keycode.value ||| acc
       end)
 
     keycodes =
       Enum.map(state.six_keys, fn
         nil -> 0
-        {_, %{code: code}} -> code
+        {_, %{value: value}} -> value
       end)
 
     ([modifiers_bitmask, 0x00] ++ keycodes) |> List.to_string()
@@ -157,14 +183,10 @@ end
 defimpl Inspect, for: Keyboard.State do
   import Inspect.Algebra
 
-  def inspect(state, opts) do
-    list =
-      for attr <- [:keys, :modifiers, :six_keys] do
-        {attr, Map.get(state, attr)}
-      end
+  alias Keyboard.State
 
-    container_doc("#Keyboard.State<", list, ">", opts, fn
-      {field, value}, opts -> concat("#{field}: ", to_doc(value, opts))
-    end)
+  def inspect(state, opts) do
+    hid = State.to_hid_report(state)
+    concat(["#Keyboard.State<", to_doc(hid, opts), ">"])
   end
 end

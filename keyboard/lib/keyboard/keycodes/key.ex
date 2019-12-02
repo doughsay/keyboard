@@ -1,10 +1,6 @@
-defmodule Keyboard.Keycode do
-  @moduledoc """
-  Functions for working with `Keycode` structs.
-  """
-
-  @enforce_keys [:id, :type, :code, :description]
-  defstruct [:id, :type, :code, :description]
+defmodule Keyboard.Keycodes.Key do
+  @enforce_keys [:id, :value, :description]
+  defstruct [:id, :value, :description]
 
   @keys [
     {0x04, :kc_a, "A"},
@@ -88,17 +84,6 @@ defmodule Keyboard.Keycode do
     {0x65, :kc_app, "Application"}
   ]
 
-  @modifiers [
-    {0x01, :kc_lctl, "Left Control"},
-    {0x02, :kc_lsft, "Left Shift"},
-    {0x04, :kc_lalt, "Left Alt"},
-    {0x08, :kc_lspr, "Left Super"},
-    {0x10, :kc_rctl, "Right Control"},
-    {0x20, :kc_rsft, "Right Shift"},
-    {0x40, :kc_ralt, "Right Alt"},
-    {0x80, :kc_rspr, "Right Super"}
-  ]
-
   @doc """
   Gets a keycode by its ID.
 
@@ -108,66 +93,30 @@ defmodule Keyboard.Keycode do
   ## Examples
 
       iex> from_id!(:kc_a)
-      #Keyboard.Keycode<A>
+      #Keyboard.Keycodes.Key<A>
 
-      iex> from_id!(:kc_rsft)
-      #Keyboard.Keycode<Right Shift>
+      iex> from_id!(:kc_up)
+      #Keyboard.Keycodes.Key<Up Arrow>
   """
   def from_id!(id)
 
-  for {code, id, description} <- @keys do
+  for {value, id, description} <- @keys do
     def from_id!(unquote(id)) do
       struct!(__MODULE__,
         id: unquote(id),
-        type: :key,
-        code: unquote(code),
+        value: unquote(value),
         description: unquote(description)
       )
     end
   end
 
-  for {code, id, description} <- @modifiers do
-    def from_id!(unquote(id)) do
-      struct!(__MODULE__,
-        id: unquote(id),
-        type: :modifier,
-        code: unquote(code),
-        description: unquote(description)
-      )
-    end
-  end
-
-  def from_id!(id), do: raise("Invalid Keycode ID: #{id}")
-
-  @doc """
-  Temporary special layer keycode.
-  """
-  def special(:mo, layer) when is_integer(layer) and layer >= 0 do
-    struct!(__MODULE__,
-      id: :mo,
-      type: :special,
-      code: layer,
-      description: "MO(#{layer})"
-    )
-  end
-
-  @doc """
-  Temporary special none keycode.
-  """
-  def none do
-    struct!(__MODULE__,
-      id: :none,
-      type: :special,
-      code: 0,
-      description: "None"
-    )
-  end
+  def from_id!(id), do: raise("Invalid Key ID: #{id}")
 end
 
-defimpl Inspect, for: Keyboard.Keycode do
+defimpl Inspect, for: Keyboard.Keycodes.Key do
   import Inspect.Algebra
 
-  def inspect(keycode, _opts) do
-    concat(["#Keyboard.Keycode<", keycode.description, ">"])
+  def inspect(key, _opts) do
+    concat(["#Keyboard.Keycodes.Key<", key.description, ">"])
   end
 end
