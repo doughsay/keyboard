@@ -1,6 +1,16 @@
 defmodule Keyboard.State do
   @moduledoc """
   A struct representing the current state of the keyboard.
+
+  The state is initialized with a list of physical key to keycode maps
+  representing the desired layers. The first layer is assumed to be the active
+  default.
+
+  The keyboard state can be modified by calling `press_key/2` and
+  `release_key/2` with physical key IDs.
+
+  The state can then be turned into a HID report byte string using
+  `to_hid_report/1`.
   """
 
   use Bitwise
@@ -70,18 +80,18 @@ defmodule Keyboard.State do
   Dump keyboard state to HID report.
   """
   def to_hid_report(%__MODULE__{} = state) do
-    modifiers_bitmask =
+    modifiers_byte =
       Enum.reduce(state.modifiers, 0, fn {_, keycode}, acc ->
         keycode.value ||| acc
       end)
 
-    keycodes =
+    [one, two, three, four, five, six] =
       Enum.map(state.six_keys, fn
         nil -> 0
         {_, %{value: value}} -> value
       end)
 
-    ([modifiers_bitmask, 0x00] ++ keycodes) |> List.to_string()
+    <<modifiers_byte, 0, one, two, three, four, five, six>>
   end
 end
 
