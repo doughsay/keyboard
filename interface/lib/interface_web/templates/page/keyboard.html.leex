@@ -1,5 +1,5 @@
 <div class='keyboard'>
-    <%= for row <- layout_to_ui(@keyboard_layout, @active_keys) do %>
+    <%= for row <- layout_to_ui(@keyboard_layout, @state) do %>
         <%= for key <- row do %>
             <span
                 class='key<%= if key.active?, do: " active" %>'
@@ -8,3 +8,5 @@
         <% end %>
     <% end %>
 </div>
+
+<!-- <div class='state-inspector'><%= inspect(@state, pretty: true) %></div> -->

@@ -96,7 +96,7 @@ defmodule InterfaceWeb.KeyboardLive do
     socket =
       socket
       |> assign(:keyboard_layout, @keyboard_layout)
-      |> assign(:active_keys, %{})
+      |> assign(:state, AFK.State.new([]))
 
     if connected?(socket) do
       PubSub.subscribe(Interface.PubSub, "keyboard")
@@ -105,7 +105,7 @@ defmodule InterfaceWeb.KeyboardLive do
     {:ok, socket}
   end
 
-  def handle_info({:keys_changed, keys}, socket) do
-    {:noreply, assign(socket, :active_keys, keys)}
+  def handle_info({:state_changed, state}, socket) do
+    {:noreply, assign(socket, :state, state)}
   end
 end

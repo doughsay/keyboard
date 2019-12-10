@@ -27,10 +27,24 @@ defmodule Firmware.MatrixServer do
     {:ok, state}
   end
 
+  @matrix_layout [
+    [:k001, :k002, :k003, :k004, :k005, :k006, :k007, :k008, :k009],
+    [:k010, :k011, :k012, :k013, :k014, :k015, :k016, :k017, :k018],
+    [:k019, :k020, :k021, :k022, :k023, :k024, :k025, :k026, :k027],
+    [:k028, :k029, :k030, :k031, :k032, :k033, :k034, :k035, :k036],
+    [:k037, :k038, :k039, :k040, :k041, :k042, :k043, :k044, :k045],
+    [:k046, :k047, :k048, :k049, :k050, :k051, :k052, :k053, :k054],
+    [:k055, :k056, :k057, :k058, :k059, :k060, :k061, :k062, :k063],
+    [:k064, :k065, :k066, :k067, :k068]
+  ]
+
+  @row_pin [87, 89, 20, 26, 59, 58, 57, 86]
+  @col_pins [45, 27, 65, 23, 44, 46, 64, 47, 52]
+
   defp init_matrix_config do
     # transpose matrix, because we need to scan by column, not by row
     matrix_layout =
-      Keyboard.matrix_layout()
+      @matrix_layout
       |> Utils.pad_matrix()
       |> Enum.zip()
       |> Enum.map(fn col ->
@@ -40,8 +54,8 @@ defmodule Firmware.MatrixServer do
       end)
 
     # open the pins
-    row_pins = Keyboard.row_pins() |> Enum.map(&open_input_pin!/1)
-    col_pins = Keyboard.col_pins() |> Enum.map(&open_output_pin!/1)
+    row_pins = @row_pin |> Enum.map(&open_input_pin!/1)
+    col_pins = @col_pins |> Enum.map(&open_output_pin!/1)
 
     # zip the open pin resources into the matrix structure
     Enum.zip(

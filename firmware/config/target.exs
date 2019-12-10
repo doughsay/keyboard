@@ -44,9 +44,7 @@ config :nerves_leds,
     usr4: "beaglebone:green:usr3"
   ]
 
-config :keyboard,
-  current_keymap_file: "/etc/current_keymap",
-  keymaps_path: "/etc/keymaps/"
+config :afk, keymap_file: "/etc/keymap.etf"
 
 # Import target specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

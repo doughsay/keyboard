@@ -21,8 +21,21 @@
     box-shadow: inset 0 -1px 0 3px rgba(0,0,0,.1),0 0 0 1px rgba(0,0,0,.3);
     border-left: 1px solid rgba(0,0,0,.1);
     border-right: 1px solid rgba(0,0,0,.1);
+
+    text-align: center;
+    padding-top: 6px;
+    font-size: 16px;
 }
 
 .key.active {
     background-color: indigo;
+}
+
+.state-inspector {
+    margin-top: 2em;
+    background-color: #444;
+    color: white;
+    padding: 4px;
+    font-family: monospace;
+    white-space: pre;
 }

@@ -44,8 +44,8 @@ defmodule Firmware.MixProject do
       {:ring_logger, "~> 0.6"},
       {:toolshed, "~> 0.2"},
       {:circuits_gpio, "~> 0.1"},
+      {:afk, "~> 0.1"},
       {:interface, path: "../interface"},
-      {:keyboard, path: "../keyboard"},
 
       # Dependencies for all targets except :host
       {:nerves_runtime, "~> 0.6", targets: @all_targets},
@@ -54,10 +54,7 @@ defmodule Firmware.MixProject do
 
       # Dependencies for specific targets
       {:nerves_system_bbb_configfs,
-       github: "doughsay/nerves_system_bbb_configfs",
-       ref: "master",
-       runtime: false,
-       targets: :bbb_configfs}
+       github: "doughsay/nerves_system_bbb_configfs", ref: "master", runtime: false, targets: :bbb_configfs}
     ]
   end
 

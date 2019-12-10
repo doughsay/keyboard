@@ -5,7 +5,7 @@ defmodule Firmware.KeyboardServer do
   use Bitwise
 
   alias Firmware.MatrixServer
-  alias Keyboard.{Config, State}
+  alias AFK.State
 
   @device "/dev/hidg0"
 
@@ -21,8 +21,11 @@ defmodule Firmware.KeyboardServer do
   def init(%{device: device}) do
     {:ok, _matrix} = MatrixServer.start_link(self())
 
+    keymap_file = Application.fetch_env!(:afk, :keymap_file)
+    keymap = AFK.Keymap.load_from_file!(keymap_file)
+
     %{
-      keyboard_state: State.new(Config.switch_to_keycode_map()),
+      keyboard_state: State.new(keymap),
       hid_file: File.open!(device, [:write])
     }
     |> write_hid()
@@ -70,7 +73,7 @@ defmodule Firmware.KeyboardServer do
   end
 
   defp broadcast(state) do
-    Interface.broadcast("keyboard", {:keys_changed, state.keyboard_state.keys})
+    Interface.broadcast("keyboard", {:state_changed, state.keyboard_state})
 
     state
   end
