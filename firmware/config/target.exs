@@ -27,6 +27,8 @@ config :nerves_firmware_ssh,
 # Only enable this for prod if you understand the risks.
 node_name = if Mix.env() != :prod, do: "firmware"
 
+config :logger, backends: [RingLogger]
+
 config :gadget,
   ifname: "bond0",
   address_method: :dhcpd,

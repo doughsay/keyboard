@@ -4,20 +4,19 @@ defmodule Firmware.MatrixServer do
   use GenServer
 
   alias Circuits.GPIO
-  alias Firmware.Utils
+  alias Firmware.{Utils, Debouncer}
 
   # Client
 
-  def start_link(event_receiver) do
-    GenServer.start_link(__MODULE__, event_receiver)
+  def start_link([]) do
+    GenServer.start_link(__MODULE__, [])
   end
 
   # Server
 
   @impl true
-  def init(event_receiver) do
+  def init([]) do
     state = %{
-      event_receiver: event_receiver,
       matrix_config: init_matrix_config(),
       previous_keys: []
     }
@@ -86,13 +85,13 @@ defmodule Firmware.MatrixServer do
     Enum.each(removed, fn key ->
       Logger.debug(fn -> "Key released: #{key}" end)
 
-      send(state.event_receiver, {:key_released, key})
+      Debouncer.key_released(key)
     end)
 
     Enum.each(added, fn key ->
       Logger.debug(fn -> "Key pressed: #{key}" end)
 
-      send(state.event_receiver, {:key_pressed, key})
+      Debouncer.key_pressed(key)
     end)
 
     send(self(), :scan)

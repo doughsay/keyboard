@@ -26,6 +26,9 @@ defmodule Firmware.Application do
       # Children that only run on the host
       # Starts a worker by calling: Firmware.Worker.start_link(arg)
       # {Firmware.Worker, arg},
+      {Firmware.KeyboardServer, [device_path: "/dev/null"]},
+      Firmware.Debouncer,
+      Firmware.MockMatrixServer
     ]
   end
 
@@ -34,7 +37,9 @@ defmodule Firmware.Application do
       # Children for all targets except host
       # Starts a worker by calling: Firmware.Worker.start_link(arg)
       # {Firmware.Worker, arg},
-      Firmware.KeyboardServer
+      Firmware.KeyboardServer,
+      Firmware.Debouncer,
+      Firmware.MatrixServer
     ]
   end
 

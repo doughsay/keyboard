@@ -24,8 +24,6 @@ config :shoehorn,
 # See https://hexdocs.pm/ring_logger/readme.html for more information on
 # configuring ring_logger.
 
-config :logger, backends: [RingLogger]
-
 if Mix.env() == "prod" do
   config :logger,
     level: :info,
@@ -47,8 +45,16 @@ config :interface, InterfaceWeb.Endpoint,
     signing_salt: "qfAK1kcQLLci1GDPV7OvPF+/iLS+vS0f"
   ]
 
+if Mix.target() == :host do
+  config :interface, InterfaceWeb.Endpoint,
+    http: [port: 4000],
+    url: [host: "localhost", port: 4000]
+end
+
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
+
+config :afk, keymap_file: "rootfs_overlay/etc/keymap.etf"
 
 if Mix.target() != :host do
   import_config "target.exs"
