@@ -4,7 +4,6 @@ defmodule Firmware.KeyboardServer do
   use GenServer
   use Bitwise
 
-  alias Firmware.Debouncer
   alias AFK.State
 
   @name Firmware.KeyboardServer
@@ -29,8 +28,6 @@ defmodule Firmware.KeyboardServer do
 
   @impl true
   def init(%{device_path: device_path}) do
-    # {:ok, _debouncer} = Debouncer.start_link(self())
-
     keymap_file = Application.fetch_env!(:afk, :keymap_file)
     keymap = AFK.Keymap.load_from_file!(keymap_file)
 
