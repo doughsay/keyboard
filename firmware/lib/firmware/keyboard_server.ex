@@ -4,7 +4,7 @@ defmodule Firmware.KeyboardServer do
   use GenServer
   use Bitwise
 
-  alias Firmware.MatrixServer
+  alias Firmware.Debouncer
   alias AFK.State
 
   @device "/dev/hidg0"
@@ -19,7 +19,7 @@ defmodule Firmware.KeyboardServer do
 
   @impl true
   def init(%{device: device}) do
-    {:ok, _matrix} = MatrixServer.start_link(self())
+    {:ok, _debouncer} = Debouncer.start_link(self())
 
     keymap_file = Application.fetch_env!(:afk, :keymap_file)
     keymap = AFK.Keymap.load_from_file!(keymap_file)

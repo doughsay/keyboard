@@ -95,7 +95,7 @@ defmodule Firmware.MatrixServer do
       send(state.event_receiver, {:key_pressed, key})
     end)
 
-    Process.send_after(self(), :scan, 1)
+    send(self(), :scan)
 
     {:noreply, %{state | previous_keys: keys}}
   end
