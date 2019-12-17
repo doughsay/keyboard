@@ -1,5 +1,5 @@
 <div class='keyboard'>
-    <%= for row <- layout_to_ui(@keyboard_layout, @state) do %>
+    <%= for row <- @ui_state do %>
         <%= for key <- row do %>
             <span
                 class='key<%= if key.active?, do: " active" %>'
@@ -9,8 +9,10 @@
     <% end %>
 </div>
 
+<%# LAYER HERE %>
+
 <div class='keycodes'>
-    <%= for keycode <- all_keycodes() do %>
+    <%= for keycode <- @keycodes do %>
         <span class='keycode'><%= symbol(keycode) %></span>
     <% end %>
 </div>

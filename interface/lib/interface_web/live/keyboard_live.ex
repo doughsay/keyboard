@@ -1,7 +1,13 @@
 defmodule InterfaceWeb.KeyboardLive do
   use Phoenix.LiveView
 
+  alias AFK.Keycode.{Key, Layer, Modifier, None, Transparent}
   alias Phoenix.PubSub
+
+  import Interface.Symbol, only: [symbol: 1]
+
+  @key_width 40
+  @space_width 45
 
   @keyboard_layout [
     [
@@ -93,13 +99,17 @@ defmodule InterfaceWeb.KeyboardLive do
   end
 
   def mount(_args, socket) do
-    # keymap = Interface.Agent.keymap()
+    keymap = Interface.Agent.keymap()
     state = Interface.Agent.keyboard_server().get_state()
+    keycodes = all_keycodes(Enum.count(keymap))
+
+    ui_state = state_to_ui_state(state)
 
     socket =
       socket
-      |> assign(:keyboard_layout, @keyboard_layout)
-      |> assign(:state, state)
+      |> assign(:keymap, keymap)
+      |> assign(:ui_state, ui_state)
+      |> assign(:keycodes, keycodes)
 
     if connected?(socket) do
       PubSub.subscribe(Interface.PubSub, "keyboard")
@@ -109,6 +119,67 @@ defmodule InterfaceWeb.KeyboardLive do
   end
 
   def handle_info({:state_changed, state}, socket) do
-    {:noreply, assign(socket, :state, state)}
+    ui_state = state_to_ui_state(state)
+    {:noreply, assign(socket, :ui_state, ui_state)}
+  end
+
+  defp state_to_ui_state(state) do
+    {output, _} =
+      Enum.reduce(@keyboard_layout, {[], 0}, fn row, {output, current_y} ->
+        {row_output, _} =
+          Enum.reduce(row, {[], 0}, fn
+            {width, id}, {acc, current_x} ->
+              px_width = width * @key_width + (width - 1) * 5
+              key = make_key(id, current_x, current_y, px_width, state)
+              acc = [key | acc]
+              {acc, current_x + width * @space_width}
+
+            id, {acc, current_x} when is_atom(id) ->
+              key = make_key(id, current_x, current_y, @key_width, state)
+              acc = [key | acc]
+              {acc, current_x + @space_width}
+
+            width, {acc, current_x} when is_number(width) ->
+              {acc, current_x + width * @space_width}
+          end)
+
+        row_output = Enum.reverse(row_output)
+
+        {[row_output | output], current_y + @space_width}
+      end)
+
+    Enum.reverse(output)
+  end
+
+  defp make_key(id, x, y, width, state) do
+    keycode = AFK.State.Keymap.find_keycode(state.keymap, id)
+
+    {active?, keycode} =
+      case state.keys[id] do
+        nil -> {false, keycode}
+        keycode -> {true, keycode}
+      end
+
+    %{id: id, x: x, y: y, width: width, active?: active?, symbol: symbol(keycode)}
+  end
+
+  defp all_keycodes(n) do
+    keys = AFK.Scancode.keys() |> Enum.map(fn {_, key} -> Key.new(key) end)
+
+    layers =
+      case n do
+        0 ->
+          []
+
+        n ->
+          0..n
+          |> Enum.flat_map(fn layer ->
+            [Layer.new(:hold, layer), Layer.new(:toggle, layer), Layer.new(:default, layer)]
+          end)
+      end
+
+    modifiers = AFK.Scancode.modifiers() |> Enum.map(fn {_, mod} -> Modifier.new(mod) end)
+
+    keys ++ layers ++ modifiers ++ [None.new(), Transparent.new()]
   end
 end
