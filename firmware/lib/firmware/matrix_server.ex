@@ -4,27 +4,7 @@ defmodule Firmware.MatrixServer do
   use GenServer
 
   alias Circuits.GPIO
-  alias Firmware.{Utils, Debouncer}
-
-  # Client
-
-  def start_link([]) do
-    GenServer.start_link(__MODULE__, [])
-  end
-
-  # Server
-
-  @impl true
-  def init([]) do
-    state = %{
-      matrix_config: init_matrix_config(),
-      previous_keys: []
-    }
-
-    send(self(), :scan)
-
-    {:ok, state}
-  end
+  alias Firmware.{Utils, KeyboardServer}
 
   @matrix_layout [
     [:k001, :k002, :k003, :k004, :k005, :k006, :k007, :k008, :k009],
@@ -39,6 +19,30 @@ defmodule Firmware.MatrixServer do
 
   @row_pin [87, 89, 20, 26, 59, 58, 57, 86]
   @col_pins [45, 27, 65, 23, 44, 46, 64, 47, 52]
+
+  @debounce_window 3
+
+  # Client
+
+  def start_link([]) do
+    GenServer.start_link(__MODULE__, [])
+  end
+
+  # Server
+
+  @impl true
+  def init([]) do
+    state = %{
+      buffer: [],
+      matrix_config: init_matrix_config(),
+      previous_keys: [],
+      timer: nil
+    }
+
+    send(self(), :scan)
+
+    {:ok, state}
+  end
 
   defp init_matrix_config do
     # transpose matrix, because we need to scan by column, not by row
@@ -76,27 +80,43 @@ defmodule Firmware.MatrixServer do
   end
 
   @impl true
+  def handle_info(:flush, state) do
+    state.buffer
+    |> Enum.reverse()
+    |> Enum.uniq_by(fn {_type, key} -> key end)
+    |> Enum.each(fn
+      {:pressed, key} ->
+        Logger.debug(fn -> "Key pressed: #{key}" end)
+        KeyboardServer.key_pressed(key)
+
+      {:released, key} ->
+        Logger.debug(fn -> "Key released: #{key}" end)
+        KeyboardServer.key_released(key)
+    end)
+
+    {:noreply, %{state | buffer: [], timer: nil}}
+  end
+
+  @impl true
   def handle_info(:scan, state) do
     keys = scan(state.matrix_config)
 
-    removed = state.previous_keys -- keys
-    added = keys -- state.previous_keys
+    released = state.previous_keys -- keys
+    pressed = keys -- state.previous_keys
 
-    Enum.each(removed, fn key ->
-      Logger.debug(fn -> "Key released: #{key}" end)
+    buffer = Enum.reduce(released, state.buffer, fn key, acc -> [{:released, key} | acc] end)
+    buffer = Enum.reduce(pressed, buffer, fn key, acc -> [{:pressed, key} | acc] end)
 
-      Debouncer.key_released(key)
-    end)
-
-    Enum.each(added, fn key ->
-      Logger.debug(fn -> "Key pressed: #{key}" end)
-
-      Debouncer.key_pressed(key)
-    end)
+    state =
+      if buffer != state.buffer do
+        set_debounce_timer(state)
+      else
+        state
+      end
 
     send(self(), :scan)
 
-    {:noreply, %{state | previous_keys: keys}}
+    {:noreply, %{state | previous_keys: keys, buffer: buffer}}
   end
 
   defp scan(matrix_config) do
@@ -121,5 +141,14 @@ defmodule Firmware.MatrixServer do
 
   defp pin_high?(pin) do
     GPIO.read(pin) == 1
+  end
+
+  defp set_debounce_timer(%{timer: nil} = state) do
+    %{state | timer: Process.send_after(self(), :flush, @debounce_window)}
+  end
+
+  defp set_debounce_timer(%{timer: timer} = state) do
+    Process.cancel_timer(timer)
+    set_debounce_timer(%{state | timer: nil})
   end
 end

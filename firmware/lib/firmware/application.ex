@@ -26,7 +26,6 @@ defmodule Firmware.Application do
     [
       # Children that only run on the host
       {Firmware.KeyboardServer, [device_path: "/dev/null", keymap: keymap]},
-      Firmware.Debouncer,
       Firmware.MockMatrixServer
     ]
   end
@@ -35,7 +34,6 @@ defmodule Firmware.Application do
     [
       # Children for all targets except host
       {Firmware.KeyboardServer, [keymap: keymap]},
-      Firmware.Debouncer,
       Firmware.MatrixServer
     ]
   end

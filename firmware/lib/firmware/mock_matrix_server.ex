@@ -3,7 +3,7 @@ require Logger
 defmodule Firmware.MockMatrixServer do
   use GenServer
 
-  alias Firmware.Debouncer
+  alias Firmware.KeyboardServer
 
   @event_frequency 250
 
@@ -57,13 +57,13 @@ defmodule Firmware.MockMatrixServer do
     Enum.each(removed, fn key ->
       Logger.debug(fn -> "Key released: #{key}" end)
 
-      Debouncer.key_released(key)
+      KeyboardServer.key_released(key)
     end)
 
     Enum.each(added, fn key ->
       Logger.debug(fn -> "Key pressed: #{key}" end)
 
-      Debouncer.key_pressed(key)
+      KeyboardServer.key_pressed(key)
     end)
 
     Process.send_after(self(), :scan, @event_frequency)
