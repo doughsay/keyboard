@@ -38,7 +38,12 @@ defmodule InterfaceWeb.PageView do
 
   defp make_key(id, x, y, width, state) do
     keycode = AFK.State.Keymap.find_keycode(state.keymap, id)
-    active? = Map.has_key?(state.keys, id)
+
+    {active?, keycode} =
+      case state.keys[id] do
+        nil -> {false, keycode}
+        keycode -> {true, keycode}
+      end
 
     %{id: id, x: x, y: y, width: width, active?: active?, symbol: symbol(keycode)}
   end
