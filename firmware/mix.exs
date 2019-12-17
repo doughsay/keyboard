@@ -54,7 +54,7 @@ defmodule Firmware.MixProject do
 
       # Dependencies for specific targets
       {:nerves_system_bbb_configfs,
-       github: "doughsay/nerves_system_bbb_configfs", ref: "master", runtime: false, targets: :bbb_configfs}
+       github: "doughsay/nerves_system_bbb_configfs", ref: "v2.5.0+configfs", runtime: false, targets: :bbb_configfs}
     ]
   end
 
