@@ -6,37 +6,49 @@ defmodule Firmware.KeyboardServer do
 
   alias AFK.State
 
-  @name Firmware.KeyboardServer
   @default_device_path "/dev/hidg0"
 
   # Client
 
-  def start_link(opts \\ []) do
+  def start_link(opts) do
     device_path = Keyword.get(opts, :device_path, @default_device_path)
-    GenServer.start_link(__MODULE__, %{device_path: device_path}, name: @name)
+    keymap = Keyword.fetch!(opts, :keymap)
+
+    config = %{
+      device_path: device_path,
+      keymap: keymap
+    }
+
+    GenServer.start_link(__MODULE__, config, name: __MODULE__)
   end
 
   def key_pressed(key) do
-    GenServer.cast(@name, {:key_pressed, key})
+    GenServer.cast(__MODULE__, {:key_pressed, key})
   end
 
   def key_released(key) do
-    GenServer.cast(@name, {:key_released, key})
+    GenServer.cast(__MODULE__, {:key_released, key})
+  end
+
+  def get_state do
+    GenServer.call(__MODULE__, :get_state)
   end
 
   # Server
 
   @impl true
-  def init(%{device_path: device_path}) do
-    keymap_file = Application.fetch_env!(:afk, :keymap_file)
-    keymap = AFK.Keymap.load_from_file!(keymap_file)
-
+  def init(%{device_path: device_path, keymap: keymap}) do
     %{
       keyboard_state: State.new(keymap),
       hid_file: File.open!(device_path, [:write])
     }
     |> write_hid()
     |> ok()
+  end
+
+  @impl true
+  def handle_call(:get_state, _from, state) do
+    {:reply, state.keyboard_state, state}
   end
 
   @impl true

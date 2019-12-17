@@ -9,9 +9,10 @@ defmodule Interface.Application do
     # List all child processes to be supervised
     children = [
       # Start the endpoint when the application starts
-      InterfaceWeb.Endpoint
+      InterfaceWeb.Endpoint,
       # Starts a worker by calling: Interface.Worker.start_link(arg)
       # {Interface.Worker, arg},
+      Interface.Agent
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

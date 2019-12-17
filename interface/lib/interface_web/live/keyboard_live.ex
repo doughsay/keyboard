@@ -93,10 +93,13 @@ defmodule InterfaceWeb.KeyboardLive do
   end
 
   def mount(_args, socket) do
+    # keymap = Interface.Agent.keymap()
+    state = Interface.Agent.keyboard_server().get_state()
+
     socket =
       socket
       |> assign(:keyboard_layout, @keyboard_layout)
-      |> assign(:state, AFK.State.new([]))
+      |> assign(:state, state)
 
     if connected?(socket) do
       PubSub.subscribe(Interface.PubSub, "keyboard")

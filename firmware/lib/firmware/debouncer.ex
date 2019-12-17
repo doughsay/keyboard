@@ -3,21 +3,20 @@ defmodule Firmware.Debouncer do
 
   alias Firmware.KeyboardServer
 
-  @name Firmware.Debouncer
   @debounce_window 5
 
   # Client
 
   def start_link([]) do
-    GenServer.start_link(__MODULE__, [], name: @name)
+    GenServer.start_link(__MODULE__, [], name: __MODULE__)
   end
 
   def key_pressed(key) do
-    GenServer.cast(@name, {:key_pressed, key})
+    GenServer.cast(__MODULE__, {:key_pressed, key})
   end
 
   def key_released(key) do
-    GenServer.cast(@name, {:key_released, key})
+    GenServer.cast(__MODULE__, {:key_released, key})
   end
 
   # Server

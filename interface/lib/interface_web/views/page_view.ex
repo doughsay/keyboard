@@ -1,6 +1,10 @@
 defmodule InterfaceWeb.PageView do
   use InterfaceWeb, :view
 
+  import Interface.Symbol, only: [symbol: 1]
+
+  alias AFK.Keycode.{Key, Layer, Modifier, None, Transparent}
+
   @key_width 40
   @space_width 45
 
@@ -33,66 +37,22 @@ defmodule InterfaceWeb.PageView do
   end
 
   defp make_key(id, x, y, width, state) do
-    # layer = List.first(keymap) || %{}
-    # keycode = Map.get(layer, id, %Keycodes.None{})
+    keycode = AFK.State.Keymap.find_keycode(state.keymap, id)
     active? = Map.has_key?(state.keys, id)
 
-    %{id: id, x: x, y: y, width: width, active?: active?}
+    %{id: id, x: x, y: y, width: width, active?: active?, symbol: symbol(keycode)}
   end
 
-  # defp symbol(%Keycodes.None{}), do: "🛇"
-  # defp symbol(%{id: :escape}), do: "⎋"
-  # defp symbol(%{id: :minus}), do: "- _"
-  # defp symbol(%{id: :equals}), do: "= +"
-  # defp symbol(%{id: :backspace}), do: "⟵"
-  # defp symbol(%{id: :page_up}), do: "⇞"
-  # defp symbol(%{id: :page_down}), do: "⇟"
-  # defp symbol(%{id: :home}), do: "↖"
-  # defp symbol(%{id: :end}), do: "↘"
-  # defp symbol(%{id: :tab}), do: "↹"
+  defp all_keycodes do
+    keys = AFK.Scancode.keys() |> Enum.map(fn {_, key} -> Key.new(key) end)
 
-  # defp symbol(%{id: :up}), do: "↑"
-  # defp symbol(%{id: :down}), do: "↓"
-  # defp symbol(%{id: :left}), do: "←"
-  # defp symbol(%{id: :right}), do: "→"
+    # TODO: num layers?
+    layers =
+      [0, 1]
+      |> Enum.flat_map(fn layer -> [Layer.new(:hold, layer), Layer.new(:toggle, layer), Layer.new(:default, layer)] end)
 
-  # defp symbol(%{id: :"1"}), do: "! 1"
-  # defp symbol(%{id: :"2"}), do: "@ 2"
-  # defp symbol(%{id: :"3"}), do: "# 3"
-  # defp symbol(%{id: :"4"}), do: "$ 4"
-  # defp symbol(%{id: :"5"}), do: "% 5"
-  # defp symbol(%{id: :"6"}), do: "^ 6"
-  # defp symbol(%{id: :"7"}), do: "& 7"
-  # defp symbol(%{id: :"8"}), do: "* 8"
-  # defp symbol(%{id: :"9"}), do: "( 9"
-  # defp symbol(%{id: :"0"}), do: ") 0"
+    modifiers = AFK.Scancode.modifiers() |> Enum.map(fn {_, mod} -> Modifier.new(mod) end)
 
-  # defp symbol(%{id: :left_square_bracket}), do: "{ ["
-  # defp symbol(%{id: :right_square_bracket}), do: "} ]"
-  # defp symbol(%{id: :backslash}), do: "| \\"
-  # defp symbol(%{id: :grave}), do: "~ `"
-  # defp symbol(%{id: :semicolon}), do: ": ;"
-  # defp symbol(%{id: :single_quote}), do: "\" '"
-
-  # defp symbol(%{id: :enter}), do: "↩"
-  # defp symbol(%{id: :space}), do: ""
-
-  # defp symbol(%{id: :left_shift}), do: "⇧"
-  # defp symbol(%{id: :right_shift}), do: "⇧"
-  # defp symbol(%{id: :left_control}), do: "⌃"
-  # defp symbol(%{id: :right_control}), do: "⌃"
-  # defp symbol(%{id: :left_alt}), do: "⎇"
-  # defp symbol(%{id: :right_alt}), do: "⎇"
-  # defp symbol(%{id: :left_super}), do: "◆"
-  # defp symbol(%{id: :right_super}), do: "◆"
-
-  # defp symbol(%{id: :comma}), do: "< ,"
-  # defp symbol(%{id: :period}), do: "> ."
-  # defp symbol(%{id: :slash}), do: "? /"
-
-  # defp symbol(%{id: id}) do
-  #   id |> to_string() |> String.upcase()
-  # end
-
-  # defp symbol(_), do: "??"
+    keys ++ layers ++ modifiers ++ [None.new(), Transparent.new()]
+  end
 end

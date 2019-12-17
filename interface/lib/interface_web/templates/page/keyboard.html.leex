@@ -4,9 +4,13 @@
             <span
                 class='key<%= if key.active?, do: " active" %>'
                 style='width: <%= key.width %>px; left: <%= key.x %>px; top: <%= key.y %>px'
-            ></span>
+            ><%= key.symbol %></span>
         <% end %>
     <% end %>
 </div>
 
-<!-- <div class='state-inspector'><%= inspect(@state, pretty: true) %></div> -->
+<div class='keycodes'>
+    <%= for keycode <- all_keycodes() do %>
+        <span class='keycode'><%= symbol(keycode) %></span>
+    <% end %>
+</div>

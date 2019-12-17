@@ -1,43 +1,40 @@
 defmodule Firmware.Application do
-  # See https://hexdocs.pm/elixir/Application.html
-  # for more information on OTP Applications
   @moduledoc false
 
   use Application
 
   def start(_type, _args) do
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: Firmware.Supervisor]
+    keymap_file = Application.fetch_env!(:afk, :keymap_file)
+    keymap = AFK.Keymap.load_from_file!(keymap_file)
+
+    opts = [strategy: :one_for_all, name: Firmware.Supervisor]
 
     children =
       [
         # Children for all targets
-        # Starts a worker by calling: Firmware.Worker.start_link(arg)
-        # {Firmware.Worker, arg},
-      ] ++ children(target())
+      ] ++ children(target(), keymap)
 
-    Supervisor.start_link(children, opts)
+    response = Supervisor.start_link(children, opts)
+
+    Interface.Agent.set_keymap(keymap)
+    Interface.Agent.set_keyboard_server(Firmware.KeyboardServer)
+
+    response
   end
 
-  # List all child processes to be supervised
-  def children(:host) do
+  def children(:host, keymap) do
     [
       # Children that only run on the host
-      # Starts a worker by calling: Firmware.Worker.start_link(arg)
-      # {Firmware.Worker, arg},
-      {Firmware.KeyboardServer, [device_path: "/dev/null"]},
+      {Firmware.KeyboardServer, [device_path: "/dev/null", keymap: keymap]},
       Firmware.Debouncer,
       Firmware.MockMatrixServer
     ]
   end
 
-  def children(_target) do
+  def children(_target, keymap) do
     [
       # Children for all targets except host
-      # Starts a worker by calling: Firmware.Worker.start_link(arg)
-      # {Firmware.Worker, arg},
-      Firmware.KeyboardServer,
+      {Firmware.KeyboardServer, [keymap: keymap]},
       Firmware.Debouncer,
       Firmware.MatrixServer
     ]
