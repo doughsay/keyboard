@@ -19,5 +19,47 @@ import 'phoenix_html'
 import { Socket } from 'phoenix'
 import LiveSocket from 'phoenix_live_view'
 
-let liveSocket = new LiveSocket('/live', Socket)
+const Hooks = {
+  KeyDrag: {
+    mounted () {
+      this.el.addEventListener(
+        'dragstart',
+        function (ev) {
+          ev.dataTransfer.setData('text/plain', ev.target.id)
+        },
+        false
+      )
+    }
+  },
+
+  KeyDrop: {
+    mounted () {
+      const context = this
+
+      this.el.addEventListener(
+        'dragover',
+        function (ev) {
+          ev.preventDefault()
+        },
+        false
+      )
+
+      this.el.addEventListener(
+        'drop',
+        function (ev) {
+          ev.preventDefault()
+
+          const keycode = ev.dataTransfer.getData('text/plain')
+          const key = ev.target.id
+
+          context.pushEvent('set_keycode', { key: key, keycode: keycode })
+        },
+        false
+      )
+    }
+  }
+}
+
+let liveSocket = new LiveSocket('/live', Socket, { hooks: Hooks })
+
 liveSocket.connect()

@@ -1,61 +1,62 @@
 /* This file is for your main application css. */
 
-@import "./phoenix.css";
-@import "../../deps/phoenix_live_view/assets/css/live_view.css";
+@import './phoenix.css';
+@import '../../deps/phoenix_live_view/assets/css/live_view.css';
 
 .keyboard {
-    width: 781.25px;
-    height: 230px;
-    border-radius: 5px;
-    border: 5px solid white;
-    box-shadow: 0 0 3px rgba(0,0,0,.3);
-    position: relative;
+  width: 781.25px;
+  height: 230px;
+  border-radius: 5px;
+  border: 5px solid white;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+  position: relative;
+  margin-bottom: 2em;
 }
 
 .key {
-    position: absolute;
-    height: 40px;
-    background-color: mediumpurple;
+  position: absolute;
+  height: 40px;
+  background-color: mediumpurple;
 
-    border-radius: 6px;
-    box-shadow: inset 0 -1px 0 3px rgba(0,0,0,.1),0 0 0 1px rgba(0,0,0,.3);
-    border-left: 1px solid rgba(0,0,0,.1);
-    border-right: 1px solid rgba(0,0,0,.1);
+  border-radius: 6px;
+  box-shadow: inset 0 -1px 0 3px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.3);
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
 
-    text-align: center;
-    padding-top: 6px;
-    font-size: 16px;
+  text-align: center;
+  padding-top: 6px;
+  font-size: 16px;
 }
 
 .key.active {
-    background-color: indigo;
+  background-color: indigo;
 }
 
 .state-inspector {
-    margin-top: 2em;
-    background-color: #444;
-    color: white;
-    padding: 4px;
-    font-family: monospace;
-    white-space: pre;
-}
-
-.keycodes {
-    margin-top: 2em;
+  margin-top: 2em;
+  background-color: #444;
+  color: white;
+  padding: 4px;
+  font-family: monospace;
+  white-space: pre;
 }
 
 .keycode {
-    display: inline-block;
+  display: inline-block;
 
-    height: 40px;
-    width: 40px;
+  height: 40px;
+  width: 40px;
 
-    border-radius: 6px;
-    box-shadow: inset 0 -1px 0 3px rgba(0,0,0,.1),0 0 0 1px rgba(0,0,0,.3);
-    border-left: 1px solid rgba(0,0,0,.1);
-    border-right: 1px solid rgba(0,0,0,.1);
+  border-radius: 6px;
+  box-shadow: inset 0 -1px 0 3px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.3);
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
 
-    text-align: center;
-    padding-top: 6px;
-    font-size: 16px;
+  text-align: center;
+  padding-top: 6px;
+  font-size: 16px;
+
+  cursor: move;
 }

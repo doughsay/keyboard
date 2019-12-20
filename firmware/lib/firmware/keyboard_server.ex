@@ -34,6 +34,10 @@ defmodule Firmware.KeyboardServer do
     GenServer.call(__MODULE__, :get_state)
   end
 
+  def update_keymap(new_keymap) do
+    GenServer.cast(__MODULE__, {:update_keymap, new_keymap})
+  end
+
   # Server
 
   @impl true
@@ -49,6 +53,20 @@ defmodule Firmware.KeyboardServer do
   @impl true
   def handle_call(:get_state, _from, state) do
     {:reply, state.keyboard_state, state}
+  end
+
+  @impl true
+  def handle_cast({:update_keymap, new_keymap}, state) do
+    # FIXME:
+    Firmware.MatrixServer.reset!()
+
+    %{
+      state
+      | keyboard_state: State.new(new_keymap)
+    }
+    |> write_hid()
+    |> broadcast()
+    |> noreply()
   end
 
   @impl true

@@ -103,13 +103,35 @@ defmodule InterfaceWeb.KeyboardLive do
     state = Interface.Agent.keyboard_server().get_state()
     keycodes = all_keycodes(Enum.count(keymap))
 
-    ui_state = state_to_ui_state(state)
+    ui_state =
+      state
+      |> make_key()
+      |> make_ui_state()
+
+    layers =
+      keymap
+      |> Enum.with_index()
+      |> Map.new(fn {_layer, index} ->
+        {"Layer #{index}", index}
+      end)
+
+    current_layer = 0
+    keymap_edits = keymap
+
+    keymap_ui =
+      keymap_edits
+      |> Enum.at(current_layer)
+      |> make_edit_key()
+      |> make_ui_state()
 
     socket =
       socket
-      |> assign(:keymap, keymap)
       |> assign(:ui_state, ui_state)
       |> assign(:keycodes, keycodes)
+      |> assign(:layers, layers)
+      |> assign(:current_layer, current_layer)
+      |> assign(:keymap_edits, keymap_edits)
+      |> assign(:keymap_edits_ui_state, keymap_ui)
 
     if connected?(socket) do
       PubSub.subscribe(Interface.PubSub, "keyboard")
@@ -118,24 +140,68 @@ defmodule InterfaceWeb.KeyboardLive do
     {:ok, socket}
   end
 
+  def handle_event("select_layer", %{"form" => %{"layer" => layer}}, socket) do
+    current_layer = String.to_integer(layer)
+
+    keymap_ui =
+      socket.assigns.keymap_edits
+      |> Enum.at(current_layer)
+      |> make_edit_key()
+      |> make_ui_state()
+
+    socket =
+      socket
+      |> assign(:current_layer, current_layer)
+      |> assign(:keymap_edits_ui_state, keymap_ui)
+
+    {:noreply, socket}
+  end
+
+  def handle_event("set_keycode", %{"key" => key_string, "keycode" => encoded_keycode}, socket) do
+    key = key_string |> String.to_existing_atom()
+    keycode = encoded_keycode |> Base.decode64!() |> :erlang.binary_to_term()
+
+    current_layer = socket.assigns.current_layer
+    keymap_edits = put_in(socket.assigns.keymap_edits, [Access.at(current_layer), key], keycode)
+
+    keymap_ui =
+      keymap_edits
+      |> Enum.at(current_layer)
+      |> make_edit_key()
+      |> make_ui_state()
+
+    socket =
+      socket
+      |> assign(:keymap_edits, keymap_edits)
+      |> assign(:keymap_edits_ui_state, keymap_ui)
+
+    {:noreply, socket}
+  end
+
+  def handle_event("save_edits", _params, socket) do
+    Interface.Agent.keyboard_server().update_keymap(socket.assigns.keymap_edits)
+
+    {:noreply, socket}
+  end
+
   def handle_info({:state_changed, state}, socket) do
-    ui_state = state_to_ui_state(state)
+    ui_state = state |> make_key() |> make_ui_state()
     {:noreply, assign(socket, :ui_state, ui_state)}
   end
 
-  defp state_to_ui_state(state) do
+  defp make_ui_state(fun) do
     {output, _} =
       Enum.reduce(@keyboard_layout, {[], 0}, fn row, {output, current_y} ->
         {row_output, _} =
           Enum.reduce(row, {[], 0}, fn
             {width, id}, {acc, current_x} ->
               px_width = width * @key_width + (width - 1) * 5
-              key = make_key(id, current_x, current_y, px_width, state)
+              key = fun.(id, current_x, current_y, px_width)
               acc = [key | acc]
               {acc, current_x + width * @space_width}
 
             id, {acc, current_x} when is_atom(id) ->
-              key = make_key(id, current_x, current_y, @key_width, state)
+              key = fun.(id, current_x, current_y, @key_width)
               acc = [key | acc]
               {acc, current_x + @space_width}
 
@@ -151,16 +217,26 @@ defmodule InterfaceWeb.KeyboardLive do
     Enum.reverse(output)
   end
 
-  defp make_key(id, x, y, width, state) do
-    keycode = AFK.State.Keymap.find_keycode(state.keymap, id)
+  defp make_key(state) do
+    fn id, x, y, width ->
+      keycode = AFK.State.Keymap.find_keycode(state.keymap, id)
 
-    {active?, keycode} =
-      case state.keys[id] do
-        nil -> {false, keycode}
-        keycode -> {true, keycode}
-      end
+      {active?, keycode} =
+        case state.keys[id] do
+          nil -> {false, keycode}
+          keycode -> {true, keycode}
+        end
 
-    %{id: id, x: x, y: y, width: width, active?: active?, symbol: symbol(keycode)}
+      %{id: id, x: x, y: y, width: width, active?: active?, symbol: symbol(keycode)}
+    end
+  end
+
+  defp make_edit_key(keymap) do
+    fn id, x, y, width ->
+      keycode = keymap[id]
+
+      %{id: id, x: x, y: y, width: width, symbol: symbol(keycode)}
+    end
   end
 
   defp all_keycodes(n) do
@@ -172,7 +248,7 @@ defmodule InterfaceWeb.KeyboardLive do
           []
 
         n ->
-          0..n
+          0..(n - 1)
           |> Enum.flat_map(fn layer ->
             [Layer.new(:hold, layer), Layer.new(:toggle, layer), Layer.new(:default, layer)]
           end)

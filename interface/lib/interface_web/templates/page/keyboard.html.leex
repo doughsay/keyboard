@@ -9,10 +9,30 @@
     <% end %>
 </div>
 
-<%# LAYER HERE %>
+<button phx-click='save_edits' style='float: right;'>Save!</button>
+
+<%= form_for :form, "#", [phx_change: "select_layer"], fn f -> %>
+  <%= select f, :layer, @layers, selected: @current_layer %>
+<% end %>
+
+<div class='keyboard'>
+    <%= for row <- @keymap_edits_ui_state do %>
+        <%= for key <- row do %>
+            <span
+                id='<%= key.id %>'
+                class='key'
+                style='width: <%= key.width %>px; left: <%= key.x %>px; top: <%= key.y %>px'
+                phx-hook='KeyDrop'
+            ><%= key.symbol %></span>
+        <% end %>
+    <% end %>
+</div>
 
 <div class='keycodes'>
     <%= for keycode <- @keycodes do %>
-        <span class='keycode'><%= symbol(keycode) %></span>
+        <span
+            id='<%= dump_keycode(keycode) %>'
+            class='keycode' phx-hook='KeyDrag' draggable='true'
+        ><%= symbol(keycode) %></span>
     <% end %>
 </div>

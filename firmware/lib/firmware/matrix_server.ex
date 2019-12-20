@@ -25,7 +25,11 @@ defmodule Firmware.MatrixServer do
   # Client
 
   def start_link([]) do
-    GenServer.start_link(__MODULE__, [])
+    GenServer.start_link(__MODULE__, [], name: __MODULE__)
+  end
+
+  def reset! do
+    GenServer.call(__MODULE__, :reset!)
   end
 
   # Server
@@ -34,14 +38,26 @@ defmodule Firmware.MatrixServer do
   def init([]) do
     state = %{
       buffer: [],
+      held_keys: [],
       matrix_config: init_matrix_config(),
-      previous_keys: [],
       timer: nil
     }
 
     send(self(), :scan)
 
     {:ok, state}
+  end
+
+  @impl true
+  def handle_call(:reset!, _from, state) do
+    case state.timer do
+      nil -> :ok
+      timer -> Process.cancel_timer(timer)
+    end
+
+    state = %{state | buffer: [], held_keys: [], timer: nil}
+
+    {:reply, :ok, state}
   end
 
   defp init_matrix_config do
@@ -101,8 +117,8 @@ defmodule Firmware.MatrixServer do
   def handle_info(:scan, state) do
     keys = scan(state.matrix_config)
 
-    released = state.previous_keys -- keys
-    pressed = keys -- state.previous_keys
+    released = state.held_keys -- keys
+    pressed = keys -- state.held_keys
 
     buffer = Enum.reduce(released, state.buffer, fn key, acc -> [{:released, key} | acc] end)
     buffer = Enum.reduce(pressed, buffer, fn key, acc -> [{:pressed, key} | acc] end)
@@ -116,7 +132,7 @@ defmodule Firmware.MatrixServer do
 
     Process.send_after(self(), :scan, 2)
 
-    {:noreply, %{state | previous_keys: keys, buffer: buffer}}
+    {:noreply, %{state | held_keys: keys, buffer: buffer}}
   end
 
   defp scan(matrix_config) do

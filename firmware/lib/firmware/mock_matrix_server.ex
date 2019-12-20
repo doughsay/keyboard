@@ -10,7 +10,11 @@ defmodule Firmware.MockMatrixServer do
   # Client
 
   def start_link([]) do
-    GenServer.start_link(__MODULE__, [])
+    GenServer.start_link(__MODULE__, [], name: __MODULE__)
+  end
+
+  def reset! do
+    GenServer.call(__MODULE__, :reset!)
   end
 
   # Server
@@ -18,11 +22,11 @@ defmodule Firmware.MockMatrixServer do
   @impl true
   def init([]) do
     state = %{
+      held_keys: [],
       possible_keys:
         Enum.map(1..68, fn n ->
           String.to_atom("k" <> String.pad_leading(to_string(n), 3, "0"))
-        end),
-      previous_keys: []
+        end)
     }
 
     Process.send_after(self(), :scan, @event_frequency)
@@ -31,8 +35,15 @@ defmodule Firmware.MockMatrixServer do
   end
 
   @impl true
+  def handle_call(:reset!, _from, state) do
+    state = %{state | held_keys: []}
+
+    {:reply, :ok, state}
+  end
+
+  @impl true
   def handle_info(:scan, state) do
-    n = Enum.count(state.previous_keys)
+    n = Enum.count(state.held_keys)
 
     keys =
       cond do
@@ -41,18 +52,18 @@ defmodule Firmware.MockMatrixServer do
 
         :rand.uniform(n) <= 5 ->
           # add a key
-          missing_keys = state.possible_keys -- state.previous_keys
+          missing_keys = state.possible_keys -- state.held_keys
           key = Enum.random(missing_keys)
-          [key | state.previous_keys] |> Enum.sort()
+          [key | state.held_keys] |> Enum.sort()
 
         true ->
           # remove a key
-          key = Enum.random(state.previous_keys)
-          List.delete(state.previous_keys, key)
+          key = Enum.random(state.held_keys)
+          List.delete(state.held_keys, key)
       end
 
-    removed = state.previous_keys -- keys
-    added = keys -- state.previous_keys
+    removed = state.held_keys -- keys
+    added = keys -- state.held_keys
 
     Enum.each(removed, fn key ->
       Logger.debug(fn -> "Key released: #{key}" end)
@@ -68,6 +79,6 @@ defmodule Firmware.MockMatrixServer do
 
     Process.send_after(self(), :scan, @event_frequency)
 
-    {:noreply, %{state | previous_keys: keys}}
+    {:noreply, %{state | held_keys: keys}}
   end
 end
