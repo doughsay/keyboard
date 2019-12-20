@@ -20,7 +20,7 @@ defmodule Firmware.MatrixServer do
   @row_pin [87, 89, 20, 26, 59, 58, 57, 86]
   @col_pins [45, 27, 65, 23, 44, 46, 64, 47, 52]
 
-  @debounce_window 3
+  @debounce_window 10
 
   # Client
 
@@ -83,7 +83,7 @@ defmodule Firmware.MatrixServer do
   def handle_info(:flush, state) do
     state.buffer
     |> Enum.reverse()
-    |> Enum.uniq_by(fn {_type, key} -> key end)
+    |> Utils.dedupe_events()
     |> Enum.each(fn
       {:pressed, key} ->
         Logger.debug(fn -> "Key pressed: #{key}" end)
@@ -114,7 +114,7 @@ defmodule Firmware.MatrixServer do
         state
       end
 
-    send(self(), :scan)
+    Process.send_after(self(), :scan, 2)
 
     {:noreply, %{state | previous_keys: keys, buffer: buffer}}
   end
