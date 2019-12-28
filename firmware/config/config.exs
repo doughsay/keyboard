@@ -48,7 +48,21 @@ config :interface, InterfaceWeb.Endpoint,
 if Mix.target() == :host do
   config :interface, InterfaceWeb.Endpoint,
     http: [port: 4000],
-    url: [host: "localhost", port: 4000]
+    url: [host: "localhost", port: 4000],
+    debug_errors: true,
+    code_reloader: true,
+    check_origin: false,
+    watchers: [
+      node: [
+        "../../interface/assets/node_modules/webpack/bin/webpack.js",
+        "--mode",
+        "development",
+        "--watch-stdin",
+        cd: Path.expand("../../interface/assets", __DIR__)
+      ]
+    ]
+
+  config :logger, level: :info
 end
 
 # Use Jason for JSON parsing in Phoenix
