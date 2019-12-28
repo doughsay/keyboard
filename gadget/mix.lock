@@ -1,6 +1,6 @@
 %{
   "dns": {:hex, :dns, "2.1.2", "81c46d39f7934f0e73368355126e4266762cf227ba61d5889635d83b2d64a493", [:mix], [{:socket, "~> 0.3.13", [hex: :socket, repo: "hexpm", optional: false]}], "hexpm"},
-  "earmark": {:hex, :earmark, "1.4.2", "3aa0bd23bc4c61cf2f1e5d752d1bb470560a6f8539974f767a38923bb20e1d7f", [:mix], [], "hexpm"},
+  "earmark": {:hex, :earmark, "1.4.3", "364ca2e9710f6bff494117dbbd53880d84bebb692dafc3a78eb50aa3183f2bfd", [:mix], [], "hexpm"},
   "elixir_make": {:hex, :elixir_make, "0.6.0", "38349f3e29aff4864352084fc736fa7fa0f2995a819a737554f7ebd28b85aaab", [:mix], [], "hexpm"},
   "ex_doc": {:hex, :ex_doc, "0.21.2", "caca5bc28ed7b3bdc0b662f8afe2bee1eedb5c3cf7b322feeeb7c6ebbde089d6", [:mix], [{:earmark, "~> 1.3.3 or ~> 1.4", [hex: :earmark, repo: "hexpm", optional: false]}, {:makeup_elixir, "~> 0.14", [hex: :makeup_elixir, repo: "hexpm", optional: false]}], "hexpm"},
   "makeup": {:hex, :makeup, "1.0.0", "671df94cf5a594b739ce03b0d0316aa64312cee2574b6a44becb83cd90fb05dc", [:mix], [{:nimble_parsec, "~> 0.5.0", [hex: :nimble_parsec, repo: "hexpm", optional: false]}], "hexpm"},
@@ -13,8 +13,8 @@
   "nerves_runtime": {:hex, :nerves_runtime, "0.10.3", "8671c805262a6b8819a92b16afb100060af55a807a30f62395136c133e72b4ab", [:make, :mix], [{:elixir_make, "~> 0.6", [hex: :elixir_make, repo: "hexpm", optional: false]}, {:system_registry, "~> 0.8.0", [hex: :system_registry, repo: "hexpm", optional: false]}, {:uboot_env, "~> 0.1.1", [hex: :uboot_env, repo: "hexpm", optional: false]}], "hexpm"},
   "nerves_time": {:hex, :nerves_time, "0.3.2", "cbd1048701a756695cda6ec5835419e47505a7fe437f97088c9475dc6f8ab625", [:make, :mix], [{:elixir_make, "~> 0.6", [hex: :elixir_make, repo: "hexpm", optional: false]}, {:muontrap, "~> 0.5", [hex: :muontrap, repo: "hexpm", optional: false]}], "hexpm"},
   "nerves_wpa_supplicant": {:hex, :nerves_wpa_supplicant, "0.5.2", "4ec392fc08faf35f50d1070446c2e5019f6b85bd53f5716f904e3f75716d9596", [:make, :mix], [{:elixir_make, "~> 0.5", [hex: :elixir_make, repo: "hexpm", optional: false]}], "hexpm"},
-  "nimble_parsec": {:hex, :nimble_parsec, "0.5.1", "c90796ecee0289dbb5ad16d3ad06f957b0cd1199769641c961cfe0b97db190e0", [:mix], [], "hexpm"},
-  "one_dhcpd": {:hex, :one_dhcpd, "0.2.3", "753f1495a5f1b29d24b6e1f1e4e9c30c54242daae236bed6baff32027165559e", [:make, :mix], [{:elixir_make, "~> 0.6", [hex: :elixir_make, repo: "hexpm", optional: false]}], "hexpm"},
+  "nimble_parsec": {:hex, :nimble_parsec, "0.5.3", "def21c10a9ed70ce22754fdeea0810dafd53c2db3219a0cd54cf5526377af1c6", [:mix], [], "hexpm"},
+  "one_dhcpd": {:hex, :one_dhcpd, "0.2.4", "2664f2e1ac72cbae0474a88d1a3d55019ccc3ee582ded382589511627a8ed516", [:make, :mix], [{:elixir_make, "~> 0.6", [hex: :elixir_make, repo: "hexpm", optional: false]}], "hexpm"},
   "ring_logger": {:hex, :ring_logger, "0.8.0", "b1baddc269099b2afe2ea3a87b8e2b71e57331c0000038ae55090068aac679db", [:mix], [], "hexpm"},
   "socket": {:hex, :socket, "0.3.13", "98a2ab20ce17f95fb512c5cadddba32b57273e0d2dba2d2e5f976c5969d0c632", [:mix], [], "hexpm"},
   "system_registry": {:hex, :system_registry, "0.8.2", "df791dc276652fcfb53be4dab823e05f8269b96ac57c26f86a67838dbc0eefe7", [:mix], [], "hexpm"},
