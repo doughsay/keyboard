@@ -1,9 +1,5 @@
 use Mix.Config
 
-# Authorize the device to receive firmware using your public key.
-# See https://hexdocs.pm/nerves_firmware_ssh/readme.html for more information
-# on configuring nerves_firmware_ssh.
-
 keys =
   [
     Path.join([System.user_home!(), ".ssh", "id_rsa.pub"]),
@@ -23,16 +19,25 @@ if keys == [],
 config :nerves_firmware_ssh,
   authorized_keys: Enum.map(keys, &File.read!/1)
 
-# Setting the node_name will enable Erlang Distribution.
-# Only enable this for prod if you understand the risks.
-node_name = if Mix.env() != :prod, do: "firmware"
+hostname = "keyboard.local"
+
+config :interface, InterfaceWeb.Endpoint,
+  http: [port: 80, ip: {0, 0, 0, 0}],
+  url: [host: hostname, port: 80],
+  server: true,
+  secret_key_base: "pOgEiGJWEsxiX3BmzCNGjiyVUDYG6HGnhzb9FBlG6EeGDiGm1x4tg0TBDqBWA432",
+  live_view: [
+    signing_salt: "qfAK1kcQLLci1GDPV7OvPF+/iLS+vS0f"
+  ]
 
 config :logger, backends: [RingLogger]
+
+node_name = if Mix.env() != :prod, do: "firmware"
 
 config :gadget,
   ifname: "bond0",
   address_method: :dhcpd,
-  mdns_domain: "keyboard.local",
+  mdns_domain: hostname,
   node_name: node_name,
   node_host: :mdns_domain
 
@@ -48,8 +53,4 @@ config :nerves_leds,
 
 config :afk, keymap_file: "/etc/keymap.etf"
 
-# Import target specific config. This must remain at the bottom
-# of this file so it overrides the configuration defined above.
-# Uncomment to use target specific configurations
-
-# import_config "#{Mix.target()}.exs"
+import_config "#{Mix.env()}.exs"
