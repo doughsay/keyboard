@@ -1,5 +1,5 @@
 defmodule Interface.Symbol do
-  alias AFK.Keycode.{Key, Layer, Modifier, None, Transparent}
+  alias AFK.Keycode.{Key, KeyLock, Layer, Modifier, None, Transparent}
 
   defprotocol Proto do
     def symbol(keycode)
@@ -36,7 +36,7 @@ defmodule Interface.Symbol do
     def symbol(%Key{key: :slash}), do: "? /"
     def symbol(%Key{key: :caps_lock}), do: "⇪"
     def symbol(%Key{key: :print_screen}), do: "⎙"
-    def symbol(%Key{key: :scroll_lock}), do: "🔒"
+    def symbol(%Key{key: :scroll_lock}), do: "⇳🔒"
     def symbol(%Key{key: :pause}), do: "⎉"
     def symbol(%Key{key: :insert}), do: "⎀"
     # alternate: "↖"
@@ -54,6 +54,10 @@ defmodule Interface.Symbol do
     def symbol(%Key{key: :up}), do: "↑"
     def symbol(%Key{key: :application}), do: "▤"
     def symbol(%Key{key: key}), do: key |> to_string() |> String.upcase()
+  end
+
+  defimpl Proto, for: KeyLock do
+    def symbol(%KeyLock{}), do: "🔐"
   end
 
   def symbol(keycode), do: Proto.symbol(keycode)

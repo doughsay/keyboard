@@ -50,7 +50,7 @@ defmodule Firmware.MixProject do
       {:ring_logger, "~> 0.6"},
       {:toolshed, "~> 0.2"},
       {:circuits_gpio, "~> 0.1"},
-      {:afk, "~> 0.1"},
+      {:afk, "~> 0.2"},
 
       # Interface
       {:phoenix, "~> 1.4.11"},

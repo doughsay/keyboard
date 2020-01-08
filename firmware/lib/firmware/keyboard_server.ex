@@ -4,6 +4,7 @@ defmodule Firmware.KeyboardServer do
   use GenServer
   use Bitwise
 
+  alias AFK.HIDReport.SixKeyRollover
   alias AFK.State
 
   @default_device_path "/dev/hidg0"
@@ -100,7 +101,7 @@ defmodule Firmware.KeyboardServer do
   end
 
   defp write_hid(state) do
-    hid_report = State.to_hid_report(state.keyboard_state)
+    hid_report = SixKeyRollover.hid_report(state.keyboard_state)
 
     Logger.debug(fn -> "HID state changed: " <> inspect(hid_report) end)
 

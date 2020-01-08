@@ -1,7 +1,7 @@
 defmodule InterfaceWeb.KeyboardLive do
   use Phoenix.LiveView
 
-  alias AFK.Keycode.{Key, Layer, Modifier, None, Transparent}
+  alias AFK.Keycode.{Key, KeyLock, Layer, Modifier, None, Transparent}
   alias Phoenix.PubSub
 
   import Interface.Symbol, only: [symbol: 1]
@@ -256,6 +256,6 @@ defmodule InterfaceWeb.KeyboardLive do
 
     modifiers = AFK.Scancode.modifiers() |> Enum.map(fn {_, mod} -> Modifier.new(mod) end)
 
-    keys ++ layers ++ modifiers ++ [None.new(), Transparent.new()]
+    keys ++ layers ++ modifiers ++ [None.new(), Transparent.new(), KeyLock.new()]
   end
 end
