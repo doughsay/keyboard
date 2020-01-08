@@ -1,5 +1,5 @@
 defmodule InterfaceWeb.Endpoint do
-  use Phoenix.Endpoint, otp_app: :interface
+  use Phoenix.Endpoint, otp_app: :firmware
 
   socket "/live", Phoenix.LiveView.Socket
 
@@ -13,7 +13,7 @@ defmodule InterfaceWeb.Endpoint do
   # when deploying your static files in production.
   plug Plug.Static,
     at: "/",
-    from: :interface,
+    from: :firmware,
     gzip: false,
     only: ~w(css fonts images js favicon.ico robots.txt)
 

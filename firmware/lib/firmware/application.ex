@@ -9,10 +9,7 @@ defmodule Firmware.Application do
 
     opts = [strategy: :one_for_all, name: Firmware.Supervisor]
 
-    children =
-      [
-        # Children for all targets
-      ] ++ children(target(), keymap)
+    children = children(target(), keymap)
 
     response = Supervisor.start_link(children, opts)
 
@@ -26,7 +23,9 @@ defmodule Firmware.Application do
     [
       # Children that only run on the host
       {Firmware.KeyboardServer, [device_path: "/dev/null", keymap: keymap]},
-      Firmware.MockMatrixServer
+      Firmware.MockMatrixServer,
+      InterfaceWeb.Endpoint,
+      Interface.Agent
     ]
   end
 
@@ -34,11 +33,20 @@ defmodule Firmware.Application do
     [
       # Children for all targets except host
       {Firmware.KeyboardServer, [keymap: keymap]},
-      Firmware.MatrixServer
+      Firmware.MatrixServer,
+      InterfaceWeb.Endpoint,
+      Interface.Agent
     ]
   end
 
   def target() do
     Application.get_env(:firmware, :target)
+  end
+
+  # Tell Phoenix to update the endpoint configuration
+  # whenever the application is updated.
+  def config_change(changed, _new, removed) do
+    InterfaceWeb.Endpoint.config_change(changed, removed)
+    :ok
   end
 end

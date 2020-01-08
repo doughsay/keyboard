@@ -10,15 +10,8 @@ config :shoehorn,
 
 config :phoenix, :json_library, Jason
 
-config :interface, InterfaceWeb.Endpoint,
+config :firmware, InterfaceWeb.Endpoint,
   render_errors: [view: InterfaceWeb.ErrorView, accepts: ~w(html json)],
   pubsub: [name: Interface.PubSub, adapter: Phoenix.PubSub.PG2]
 
-case Mix.target() do
-  :host ->
-    import_config "host/config.exs"
-
-  target ->
-    import_config "target/config.exs"
-    import_config "#{target}/config.exs"
-end
+import_config "#{Mix.target()}/config.exs"
