@@ -19,7 +19,7 @@ if keys == [],
 config :nerves_firmware_ssh,
   authorized_keys: Enum.map(keys, &File.read!/1)
 
-hostname = "keyboard.local"
+hostname = "excalibur.local"
 
 config :excalibur, Excalibur.Interface.Endpoint,
   http: [port: 80, ip: {0, 0, 0, 0}],
