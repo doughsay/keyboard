@@ -1,7 +1,7 @@
-defmodule Firmware.MixProject do
+defmodule Excalibur.MixProject do
   use Mix.Project
 
-  @app :firmware
+  @app :excalibur
   @version "0.2.0"
   @all_targets [:bbb_configfs]
 
@@ -11,7 +11,7 @@ defmodule Firmware.MixProject do
       version: @version,
       elixir: "~> 1.9",
       elixirc_paths: elixirc_paths(Mix.env()),
-      compilers: [:phoenix, :gettext] ++ Mix.compilers(),
+      compilers: [:phoenix] ++ Mix.compilers(),
       archives: [nerves_bootstrap: "~> 1.6"],
       start_permanent: Mix.env() == :prod,
       build_embedded: true,
@@ -32,7 +32,7 @@ defmodule Firmware.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      mod: {Firmware.Application, []},
+      mod: {Excalibur.Application, []},
       extra_applications: [:logger, :runtime_tools, :sasl, :os_mon]
     ]
   end
@@ -58,7 +58,6 @@ defmodule Firmware.MixProject do
       {:phoenix_html, "~> 2.11"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:phoenix_live_view, "~> 0.4"},
-      {:gettext, "~> 0.11"},
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
 

@@ -20,7 +20,7 @@ live_view_signing_salt =
     You can generate one by calling: mix phx.gen.secret
     """
 
-config :firmware, InterfaceWeb.Endpoint,
+config :excalibur, Excalibur.Interface.Endpoint,
   secret_key_base: secret_key_base,
   live_view: [
     signing_salt: live_view_signing_salt

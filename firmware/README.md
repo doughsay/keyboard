@@ -1,3 +1,3 @@
-# Firmware
+# Excalibur
 
-Firmware for Keyboard project.
+Firmware for the Excalibur keyboard.

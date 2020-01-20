@@ -1,6 +1,6 @@
 use Mix.Config
 
-config :firmware, InterfaceWeb.Endpoint,
+config :excalibur, Excalibur.Interface.Endpoint,
   http: [port: 4000],
   url: [host: "localhost", port: 4000],
   debug_errors: true,
@@ -21,11 +21,10 @@ config :firmware, InterfaceWeb.Endpoint,
   ]
 
 # Watch static and templates for browser reloading.
-config :firmware, InterfaceWeb.Endpoint,
+config :excalibur, Excalibur.Interface.Endpoint,
   live_reload: [
     patterns: [
       ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",
-      ~r"priv/gettext/.*(po)$",
       ~r"lib/interface_web/{live,views}/.*(ex)$",
       ~r"lib/interface_web/templates/.*(eex)$"
     ]

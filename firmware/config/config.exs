@@ -1,6 +1,6 @@
 use Mix.Config
 
-config :firmware, target: Mix.target()
+config :excalibur, target: Mix.target()
 
 config :nerves, :firmware, rootfs_overlay: "rootfs_overlay"
 
@@ -10,8 +10,8 @@ config :shoehorn,
 
 config :phoenix, :json_library, Jason
 
-config :firmware, InterfaceWeb.Endpoint,
-  render_errors: [view: InterfaceWeb.ErrorView, accepts: ~w(html json)],
-  pubsub: [name: Interface.PubSub, adapter: Phoenix.PubSub.PG2]
+config :excalibur, Excalibur.Interface.Endpoint,
+  render_errors: [view: Excalibur.Interface.ErrorView, accepts: ~w(html json)],
+  pubsub: [name: Excalibur.PubSub, adapter: Phoenix.PubSub.PG2]
 
 import_config "#{Mix.target()}/config.exs"

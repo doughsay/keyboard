@@ -21,7 +21,7 @@ config :nerves_firmware_ssh,
 
 hostname = "keyboard.local"
 
-config :firmware, InterfaceWeb.Endpoint,
+config :excalibur, Excalibur.Interface.Endpoint,
   http: [port: 80, ip: {0, 0, 0, 0}],
   url: [host: hostname, port: 80],
   server: true,
@@ -32,7 +32,7 @@ config :firmware, InterfaceWeb.Endpoint,
 
 config :logger, backends: [RingLogger]
 
-node_name = if Mix.env() != :prod, do: "firmware"
+node_name = if Mix.env() != :prod, do: "excalibur"
 
 config :gadget,
   ifname: "bond0",
